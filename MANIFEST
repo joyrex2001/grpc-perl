@@ -1,9 +1,0 @@
-Grpc/Stub/AbstractCall.pm
-Grpc/Stub/BaseStub.pm
-Grpc/Stub/BidiStreamingCall.pm
-Grpc/Stub/ClientStreamingCall.pm
-Grpc/Stub/ServerStreamingCall.pm
-Grpc/Stub/UnaryCall.pm
-ext/Timeval.xs
-Makefile.PL
-MANIFEST
