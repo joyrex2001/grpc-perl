@@ -7,3 +7,5 @@ plan tests => 2;
 
 use_ok("Grpc::XS::Timeval");
 ok(Grpc::XS::Timeval::add_numbers_perl(1,2)==3,'1+2!=3?');
+
+print STDERR Dumper(Grpc::XS::Timeval::zero())

@@ -8,7 +8,7 @@ WriteMakefile(
       NAME          => 'Grpc::XS',
       VERSION_FROM  => 'lib/Grpc/XS.pm',
       AUTHOR        => 'Vincent van Dam',
-      LIBS          => [''],
+      LIBS          => ['-L/usr/local/lib -lgrpc'],
       DEFINE        => '',
       INC           => '-I.',
       OBJECT        => '$(O_FILES)',
