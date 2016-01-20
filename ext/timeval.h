@@ -20,4 +20,10 @@ gpr_timespec pl_init_gpr_timespec(tv_sec,tv_nsec,clock_type) {
   return t;
 }
 
+typedef struct {
+  gpr_timespec wrapped_gpr_timespec;
+} TimevalCTX;
+
+typedef TimevalCTX* Grpc__XS__Timeval;
+
 #endif

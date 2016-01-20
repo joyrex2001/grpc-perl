@@ -5,12 +5,12 @@ use warnings;
 ## Base class for generated client stubs. Stub methods are expected to call
 ## _simpleRequest or _streamRequest and return the result.
 
-our $VERSION = "0.1";
+use Grpc::XS;
 
 use constant true  => 1;
 use constant false => 0;
 
-## params: 
+## params:
 ##    - 'hostname': string
 ##    - 'update_metadata': (optional) a callback function which takes in a
 ##                         metadata array, and returns an updated metadata array
@@ -29,16 +29,16 @@ sub new {
 	} else {
 		$primary_user_agent = "";
 	}
-	$primary_user_agent = "grpc-perl/".$VERSION;
+	$primary_user_agent = "grpc-perl/".($Grpc::XS::VERSION);
 
 	if (!defined($credentials)) {
            die("The 'credentials' key is now ".
                "required. Please see one of the ".
   			   "ChannelCredentials::create methods");
 	}
-	
+
 	my $channel = new Channel(%param); ## TODO: XS!
-	
+
 	my $self = {
 		'_hostname'           => $hostname,
 		'_channel'            => undef,
@@ -48,7 +48,7 @@ sub new {
 		'_channel'            => $channel,
 	};
 	bless $self,$proto;
-	
+
 	return $self;
 }
 
@@ -92,7 +92,7 @@ sub waitForReady {
 			return true;
         }
 	}
-    
+
     ## deadline has passed
     $new_state = $self->getConnectivityState();
 
@@ -117,7 +117,7 @@ sub _checkConnectivityState {
 
 sub close {
 	my $self = shift;
-	$self->channel->close();
+	$self->{_channel}->close();
 }
 
 ## constructs the auth uri for the jwt.
@@ -140,7 +140,7 @@ sub _get_jwt_aud_uri {
 sub _validate_and_normalize_metadata {
 	my $self = shift;
 	my $metadata = shift || {};
-    
+
     my $metadata_copy = {};
     foreach my $key (keys %{$metadata}) {
     	if ($key !~ /^[A-Za-z\d_-]+$/) {
@@ -215,7 +215,7 @@ sub _clientStreamRequest {
                                         $deserialize,
                                         $options );
     my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
-    
+
 	if (defined($self->{_update_metadata})) {
          $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
     }
@@ -280,7 +280,7 @@ sub _bidiRequest {
                                      $deserialize,
                                      $options );
     my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
-    
+
 	if (defined($self->{_update_metadata})) {
          $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
     }

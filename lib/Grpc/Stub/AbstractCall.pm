@@ -2,6 +2,10 @@ package Grpc::Stub::AbstractCall;
 use strict;
 use warnings;
 
+use Grpc::XS::Timeval;
+use Grpc::XS::Call;
+use Grpc::XS::CallCredentials;
+
 ## Create a new Call wrapper object.
 ##
 ## @param Channel  $channel     The channel to communicate on
@@ -22,18 +26,18 @@ sub new {
 
 	my $deadline;
 	if (defined($timeout) && $timeout =~ /^\d+$/) {
-		    my $now = Timeval::now(); ## TODO: port
-            my $delta = new Timeval($timeout);
-            $deadline = $now->add($delta);
-    } else {
-            $deadline = Timeval::infFuture();
+    my $now = Grpc::XS::Timeval::now();
+    my $delta = new Grpc::XS::Timeval($timeout);
+    $deadline = Grpc::XS::Timeval::add($now,$delta);
+  } else {
+    $deadline = Grpc::XS::Timeval::infFuture();
 	}
 
-	my $call = new Call($channel, $method, $deadline);
+	my $call = new Grpc::XS::Call($channel, $method, $deadline);
 
 	my $call_credentials;
 	if (defined($call_credentials_callback)) {
-		$call_credentials = CallCredentials::createFromPlugin(
+		$call_credentials = Grpc::XS::CallCredentials::createFromPlugin(
 										$call_credentials_callback);
 		$call->setCredentials($call_credentials);
 	}
