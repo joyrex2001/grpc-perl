@@ -5,8 +5,9 @@ new(const char *class, ... )
   PREINIT:
     TimevalCTX* ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
   CODE:
-    if (items) {
-      ctx->wrapped_gpr_timespec = gpr_time_from_micros(ST(1),GPR_TIMESPAN);
+    if (items>1) {
+      ctx->wrapped_gpr_timespec =
+          gpr_time_from_micros((long)SvPV_nolen(ST(1)),GPR_TIMESPAN);
     } else {
       ctx->wrapped_gpr_timespec = gpr_time_0(GPR_CLOCK_REALTIME);
     }

@@ -1,2 +1,3 @@
 Grpc::XS::Call     T_PTROBJ
+Grpc::XS::Channel  T_PTROBJ
 Grpc::XS::Timeval  T_PTROBJ

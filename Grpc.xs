@@ -6,6 +6,7 @@
 
 #include "ext/timeval.h"
 #include "ext/call.h"
+#include "ext/channel.h"
 #include "ext/call_credentials.h"
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
@@ -15,6 +16,9 @@ INCLUDE: ext/timeval.xs
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::Call
 INCLUDE: ext/call.xs
+
+MODULE = Grpc::XS    PACKAGE = Grpc::XS::Channel
+INCLUDE: ext/channel.xs
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::CallCredentials
 INCLUDE: ext/call_credentials.xs
