@@ -5,7 +5,7 @@
 #include <grpc/support/time.h>
 
 typedef struct {
-  gpr_timespec wrapped_gpr_timespec;
+  gpr_timespec wrapped;
 } TimevalCTX;
 
 typedef TimevalCTX* Grpc__XS__Timeval;

@@ -2,9 +2,9 @@ package Grpc::Stub::AbstractCall;
 use strict;
 use warnings;
 
-use Grpc::XS::Timeval;
 use Grpc::XS::Call;
 use Grpc::XS::CallCredentials;
+use Grpc::XS::Timeval;
 
 ## Create a new Call wrapper object.
 ##

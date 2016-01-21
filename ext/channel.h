@@ -4,7 +4,7 @@
 #include <grpc/grpc.h>
 
 typedef struct {
-  grpc_channel *wrapped_grpc_channel;
+  grpc_channel *wrapped;
 } ChannelCTX;
 
 typedef ChannelCTX* Grpc__XS__Channel;

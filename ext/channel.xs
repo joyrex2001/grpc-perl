@@ -4,7 +4,7 @@ new(const char *class, ... )
     ChannelCTX* ctx = (ChannelCTX *)malloc( sizeof(ChannelCTX) );
   CODE:
     // string (channel)
-    // hash->{credentials} - credentials object
+    // hash->{credentials} - credentials object (optional)
     RETVAL = ctx;
   OUTPUT: RETVAL
 
@@ -31,5 +31,5 @@ close()
 void
 DESTROY(Grpc::XS::Channel self)
   CODE:
-    free(self->wrapped_grpc_channel);
+    free(self->wrapped);
     Safefree(self);

@@ -9,7 +9,7 @@ new(const char *class, ... )
     //    * deadline - timeval object
     //    * host override - string (optional)
 /*
-    ctx->wrapped_grpc_call = grpc_channel_create_call(
+    ctx->wrapped = grpc_channel_create_call(
             channel,NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue, method,
             host_override, deadline, NULL););
             */
@@ -39,6 +39,6 @@ setCredentials()
 void
 DESTROY(Grpc::XS::Call self)
   CODE:
-    grpc_call_destroy(self->wrapped_grpc_call);
-    free(self->wrapped_grpc_call);
+    grpc_call_destroy(self->wrapped);
+    free(self->wrapped);
     Safefree(self);

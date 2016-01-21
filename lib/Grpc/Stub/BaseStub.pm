@@ -6,6 +6,13 @@ use warnings;
 ## _simpleRequest or _streamRequest and return the result.
 
 use Grpc::XS;
+use Grpc::XS::Channel;
+use Grpc::XS::Timeval;
+
+use Grpc::Stub::UnaryCall;
+use Grpc::Stub::ClientStreamingCall;
+use Grpc::Stub::ServerStreamingCall;
+use Grpc::Stub::BidiStreamingCall;
 
 use constant true  => 1;
 use constant false => 0;
@@ -37,7 +44,7 @@ sub new {
   			   "ChannelCredentials::create methods");
 	}
 
-	my $channel = new Channel(%param); ## TODO: XS!
+	my $channel = new Grpc::XS::Channel(%param); ## TODO: XS!
 
 	my $self = {
 		'_hostname'           => $hostname,
@@ -81,20 +88,20 @@ sub waitForReady {
     	return true;
 	}
 
-    my $now = Timeval::now(); ##### TODO port!!!!
-   	my $delta = new Timeval($timeout);
-    my $deadline = $now->add($delta);
+  my $now = Grpc::XS::Timeval::now();
+ 	my $delta = new Grpc::XS::Timeval($timeout);
+  my $deadline = Grpc::XS::Timevall::add($now,$delta);
 
-    while ($self->{_channel}->watchConnectivityState($new_state, $deadline)) {
+  while ($self->{_channel}->watchConnectivityState($new_state, $deadline)) {
 		## state has changed before deadline
 		$new_state = $self->getConnectivityState();
-        if ($self->_checkConnectivityState($new_state)) {
+	  if ($self->_checkConnectivityState($new_state)) {
 			return true;
-        }
+	  }
 	}
 
-    ## deadline has passed
-    $new_state = $self->getConnectivityState();
+  ## deadline has passed
+  $new_state = $self->getConnectivityState();
 
 	return $self->_checkConnectivityState($new_state);
 }
@@ -127,29 +134,29 @@ sub _get_jwt_aud_uri {
 	my $method = shift;
 
 	my $service_name;
-    if ($method =~ m|^(.*)/[^/]+$|) {
+  if ($method =~ m|^(.*)/[^/]+$|) {
 		$service_name = $1;
-    } else {
+  } else {
 		die("InvalidArgumentException: ".
-			"service name must have a slash");
+				"service name must have a slash");
 	}
 
-    return 'https://'.$self->{_hostname}.$service_name;
+  return 'https://'.$self->{_hostname}.$service_name;
 }
 
 sub _validate_and_normalize_metadata {
 	my $self = shift;
 	my $metadata = shift || {};
 
-    my $metadata_copy = {};
-    foreach my $key (keys %{$metadata}) {
-    	if ($key !~ /^[A-Za-z\d_-]+$/) {
+  my $metadata_copy = {};
+  foreach my $key (keys %{$metadata}) {
+		if ($key !~ /^[A-Za-z\d_-]+$/) {
                 die("InvalidArgumentException: ".
                     "Metadata keys must be nonempty strings containing only ".
                     "alphanumeric characters, hyphens and underscores");
-        }
+		}
 		$metadata_copy->{lc($key)} = $metadata->{$key};
-    }
+  }
 
 	return $metadata_copy;
 }
@@ -176,19 +183,20 @@ sub _simpleRequest {
 	my $metadata = $param{metadata} || {};
 	my $options = $param{options} || {};
 
-    my $call = new UnaryCall($self->{_channel},  ## TODO: XS
-                             $method,
-                             $deserialize,
-                             $options);
+  my $call = new Grpc::Stub::UnaryCall(
+															$self->{_channel},  ## TODO: XS
+                            	$method,
+                          		$deserialize,
+                        			$options);
 	my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
-         $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
-    }
-    $metadata = $self->_validate_and_normalize_metadata($metadata);
-    $call->start($argument, $metadata, $options);
+		$metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
+  }
+  $metadata = $self->_validate_and_normalize_metadata($metadata);
+  $call->start($argument, $metadata, $options);
 
-    return $call;
+  return $call;
 }
 
 ## Call a remote method that takes a stream of arguments and has a single
@@ -210,19 +218,20 @@ sub _clientStreamRequest {
 	my $metadata = $param{metadata} || {};
 	my $options = $param{options} || {};
 
-	my $call = new ClientStreamingCall($self->{_channel},  ## TODO: XS
-                                        $method,
-                                        $deserialize,
-                                        $options );
-    my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
+	my $call = new Grpc::Stub::ClientStreamingCall(
+																			$self->{_channel},  ## TODO: XS
+                                      $method,
+                                      $deserialize,
+                                      $options );
+  my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
-         $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
-    }
-    $metadata = $self->_validate_and_normalize_metadata($metadata);
-    $call->start($metadata, $options);
+		$metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
+  }
+  $metadata = $self->_validate_and_normalize_metadata($metadata);
+  $call->start($metadata, $options);
 
-    return $call;
+  return $call;
 }
 
 ## Call a remote method that takes a single argument and returns a stream of
@@ -244,19 +253,20 @@ sub _serverStreamRequest {
 	my $metadata = $param{metadata} || {};
 	my $options = $param{options} || {};
 
-    my $call = new ServerStreamingCall($self->{_channel},  ## TODO: XS
-                                       $method,
-                                       $deserialize,
-                                       $options);
+  my $call = new Grpc::Stub::ServerStreamingCall(
+																			$self->{_channel},  ## TODO: XS
+                                      $method,
+                                      $deserialize,
+                                      $options);
 	my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
-         $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
-    }
-    $metadata = $self->_validate_and_normalize_metadata($metadata);
-    $call->start($argument, $metadata, $options);
+		$metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
+  }
+  $metadata = $self->_validate_and_normalize_metadata($metadata);
+  $call->start($argument, $metadata, $options);
 
-    return $call;
+  return $call;
 }
 
 ## Call a remote method with messages streaming in both directions.
@@ -275,19 +285,20 @@ sub _bidiRequest {
 	my $metadata = $param{metadata} || {};
 	my $options = $param{options} || {};
 
-	my $call = new BidiStreamingCall($self->{_channel},  ## TODO: XS
-                                     $method,
-                                     $deserialize,
-                                     $options );
-    my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
+	my $call = new Grpc::Stub::BidiStreamingCall(
+																		$self->{_channel},  ## TODO: XS
+                                  	$method,
+                                    $deserialize,
+                                    $options );
+  my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
-         $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
-    }
-    $metadata = $self->_validate_and_normalize_metadata($metadata);
-    $call->start($metadata, $options);
+    $metadata = $self->{_update_metadata}($metadata,$jwt_aud_uri);  ## TODO: PORT
+  }
+  $metadata = $self->_validate_and_normalize_metadata($metadata);
+  $call->start($metadata, $options);
 
-    return $call;
+  return $call;
 }
 
 1;

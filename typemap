@@ -1,3 +1,7 @@
-Grpc::XS::Call     T_PTROBJ
-Grpc::XS::Channel  T_PTROBJ
-Grpc::XS::Timeval  T_PTROBJ
+Grpc::XS::Call                T_PTROBJ
+Grpc::XS::CallCredentials     T_PTROBJ
+Grpc::XS::Channel             T_PTROBJ
+Grpc::XS::ChannelCredentials  T_PTROBJ
+Grpc::XS::Server              T_PTROBJ
+Grpc::XS::ServerCredentials   T_PTROBJ
+Grpc::XS::Timeval             T_PTROBJ

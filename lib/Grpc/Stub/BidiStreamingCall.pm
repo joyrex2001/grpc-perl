@@ -12,7 +12,7 @@ use constant false => 0;
 sub start {
 	my $self = shift;
 	my $metadata = shift || {};
-	
+
 	$self->{_call}->startBatch({
             OP_SEND_INITIAL_METADATA => $metadata,
 	});
@@ -24,16 +24,16 @@ sub start {
 
 sub read {
 	my $self = shift;
-	
-    my $batch = { OP_RECV_MESSAGE => true };
+
+  my $batch = { OP_RECV_MESSAGE => true };
 	if (!defined($self->{_metadata})) {
 		$batch->{OP_RECV_INITIAL_METADATA} = true;
-    }
-    
-    my $read_event = $self->{_call}->startBatch($batch);
-    if (!defined($self->{_metadata})) {
-    	$self->{_metadata} = $read_event->{metadata};
-    }
+  }
+
+  my $read_event = $self->{_call}->startBatch($batch);
+  if (!defined($self->{_metadata})) {
+  	$self->{_metadata} = $read_event->{metadata};
+  }
 
 	return $self->deserializeResponse($read_event->{message});
 }
@@ -52,12 +52,12 @@ sub write {
 	my $options = $param{options}||{};
 
 	my $message = { 'message' => $data->serialize() };
-    if (defined($options->{'flags'})) {
-            $message->{'flags'} = $options->{'flags'};
-    }
-    $self->{_call}->startBatch({
+  if (defined($options->{'flags'})) {
+    $message->{'flags'} = $options->{'flags'};
+  }
+  $self->{_call}->startBatch({
             OP_SEND_MESSAGE => $message,
-    });
+  });
 }
 
 ## Indicate that no more writes will be sent.

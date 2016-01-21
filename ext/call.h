@@ -4,7 +4,7 @@
 #include <grpc/grpc.h>
 
 typedef struct {
-  grpc_call *wrapped_grpc_call;
+  grpc_call *wrapped;
 } CallCTX;
 
 typedef CallCTX* Grpc__XS__Call;
