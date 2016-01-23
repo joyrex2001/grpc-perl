@@ -3,7 +3,7 @@ use strict;
 use Data::Dumper;
 use Test::More;
 
-plan tests => 14;
+plan tests => 15;
 
 use_ok('Grpc::Stub::AbstractCall');
 use_ok('Grpc::Stub::BaseStub');
@@ -16,6 +16,7 @@ use_ok('Grpc::XS::Call');
 use_ok('Grpc::XS::CallCredentials');
 use_ok('Grpc::XS::Channel');
 use_ok('Grpc::XS::ChannelCredentials');
+use_ok('Grpc::XS::Constants');
 use_ok('Grpc::XS::Server');
 use_ok('Grpc::XS::ServerCredentials');
 use_ok('Grpc::XS::Timeval');

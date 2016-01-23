@@ -12,7 +12,7 @@ use constant false => 0;
 sub start {
 	my $self = shift;
 	my $metadata = shift || {};
-	
+
 	$self->{_call}->startBatch({
             OP_SEND_INITIAL_METADATA => $metadata,
 	});
@@ -46,7 +46,7 @@ sub write {
 
 sub wait {
 	my $self  = shift;
-	
+
 	my $event = $self->{_call}->startBatch({
             OP_SEND_CLOSE_FROM_CLIENT => true,
             OP_RECV_INITIAL_METADATA => true,

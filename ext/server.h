@@ -4,6 +4,7 @@
 #include <grpc/grpc.h>
 
 typedef struct {
+  grpc_server *wrapped;
 } ServerCTX;
 
 typedef ServerCTX* Grpc__XS__Server;

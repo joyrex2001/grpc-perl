@@ -31,7 +31,7 @@ sub start{
             OP_SEND_MESSAGE => $message,
             OP_SEND_CLOSE_FROM_CLIENT => true,
     });
-   	
+
    	$self->{_metadata} = $event->{metadata};
 }
 

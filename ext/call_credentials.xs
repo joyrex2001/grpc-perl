@@ -9,7 +9,7 @@ createComposite(Grpc::XS::CallCredentials cred1, Grpc::XS::CallCredentials cred2
   OUTPUT: RETVAL
 
 Grpc::XS::CallCredentials
-createFromPlugin()
+createFromPlugin(/* method callback */)
   CODE:
     // todo
   OUTPUT:

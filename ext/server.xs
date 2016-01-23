@@ -11,19 +11,22 @@ requestCall()
   CODE:
   OUTPUT:
 
-SV *
-addHttp2Port()
+long
+addHttp2Port(Grpc::XS::Server self, SV* addr)
   CODE:
-  OUTPUT:
+    RETVAL = grpc_server_add_insecure_http2_port(self->wrapped, SvPV_nolen(addr));
+  OUTPUT: RETVAL
 
-SV *
-addSecureHttp2Port()
+long
+addSecureHttp2Port(Grpc::XS::Server self, SV* addr, Grpc::XS::ServerCredentials creds)
   CODE:
-  OUTPUT:
+    RETVAL = grpc_server_add_secure_http2_port(self->wrapped, SvPV_nolen(addr), creds->wrapped);
+  OUTPUT: RETVAL
 
-SV *
-start()
+void
+start(Grpc::XS::Server self)
   CODE:
+    grpc_server_start(self->wrapped);
   OUTPUT:
 
 void

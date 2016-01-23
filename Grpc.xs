@@ -8,9 +8,12 @@
 #include "ext/call_credentials.h"
 #include "ext/channel.h"
 #include "ext/channel_credentials.h"
+#include "ext/constants.h"
 #include "ext/server.h"
 #include "ext/server_credentials.h"
 #include "ext/timeval.h"
+
+grpc_completion_queue *completion_queue;
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
 
@@ -25,6 +28,9 @@ INCLUDE: ext/channel.xs
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::ChannelCredentials
 INCLUDE: ext/channel_credentials.xs
+
+MODULE = Grpc::XS    PACKAGE = Grpc::XS::Constants
+INCLUDE: ext/constants.xs
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::Server
 INCLUDE: ext/server.xs
