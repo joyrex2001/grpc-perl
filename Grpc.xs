@@ -12,8 +12,7 @@
 #include "ext/server.h"
 #include "ext/server_credentials.h"
 #include "ext/timeval.h"
-
-grpc_completion_queue *completion_queue;
+#include "Util.h"
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
 

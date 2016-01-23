@@ -11,7 +11,7 @@ WriteMakefile(
       LIBS          => ['-L/usr/local/lib -lgrpc'],
       DEFINE        => '',
       INC           => '-I.',
-#      C             => [ "ext/completion_queue.c" ],
+      C             => [ "Grpc.c","Util.c" ],
       OBJECT        => '$(O_FILES)',
       OPTIMIZE      => $DEBUG ? '-g' : '-O2',
     );
