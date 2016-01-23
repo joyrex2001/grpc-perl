@@ -11,7 +11,7 @@ WriteMakefile(
       LIBS          => ['-L/usr/local/lib -lgrpc'],
       DEFINE        => '',
       INC           => '-I.',
-      C             => [ "Grpc.c","Util.c" ],
+      C             => [ "Grpc.c", "util.c" ],
       OBJECT        => '$(O_FILES)',
       OPTIMIZE      => $DEBUG ? '-g' : '-O2',
     );

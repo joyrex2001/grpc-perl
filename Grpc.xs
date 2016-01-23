@@ -12,7 +12,7 @@
 #include "ext/server.h"
 #include "ext/server_credentials.h"
 #include "ext/timeval.h"
-#include "Util.h"
+#include "util.h"
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
 

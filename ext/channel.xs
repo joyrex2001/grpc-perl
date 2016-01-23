@@ -2,6 +2,7 @@ Grpc::XS::Channel
 new(const char *class, const char* channel, ... )
   PREINIT:
     ChannelCTX* ctx = (ChannelCTX *)malloc( sizeof(ChannelCTX) );
+    ctx->wrapped = NULL;
   CODE:
     if ( ( items - 2 ) % 2 ) {
       croak("Expecting a hash as input to constructor");

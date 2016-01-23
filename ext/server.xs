@@ -2,6 +2,7 @@ Grpc::XS::Server
 new(const char *class, ... )
   PREINIT:
     ServerCTX* ctx = (ServerCTX *)malloc( sizeof(ServerCTX) );
+    ctx->wrapped = NULL;
   CODE:
     RETVAL = ctx;
   OUTPUT: RETVAL

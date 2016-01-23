@@ -2,6 +2,7 @@ Grpc::XS::CallCredentials
 createComposite(Grpc::XS::CallCredentials cred1, Grpc::XS::CallCredentials cred2)
   PREINIT:
     CallCredentialsCTX* ctx = (CallCredentialsCTX *)malloc( sizeof(CallCredentialsCTX) );
+    ctx->wrapped = NULL;
   CODE:
     ctx->wrapped = grpc_composite_call_credentials_create(
                                 cred1->wrapped, cred2->wrapped, NULL);
@@ -17,6 +18,8 @@ createFromPlugin(/* method callback */)
 void
 DESTROY(Grpc::XS::CallCredentials self)
   CODE:
-    grpc_call_credentials_release(self->wrapped);
+    if (self->wrapped != NULL) {
+      grpc_call_credentials_release(self->wrapped);
+    }
     free(self->wrapped);
     Safefree(self);

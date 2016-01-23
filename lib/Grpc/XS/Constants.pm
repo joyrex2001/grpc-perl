@@ -4,9 +4,8 @@ use strict;
 use warnings;
 
 use Grpc::XS;
+use base qw(Exporter);
 
-use Exporter;
-*import = \&Exporter::import;
 our @EXPORT_OK = qw(
   GRPC_CALL_OK
   GRPC_CALL_ERROR
@@ -49,6 +48,10 @@ our @EXPORT_OK = qw(
   GRPC_CHANNEL_READY
   GRPC_CHANNEL_TRANSIENT_FAILURE
   GRPC_CHANNEL_FATAL_FAILURE
+  GPR_CLOCK_MONOTONIC
+  GPR_CLOCK_REALTIME
+  GPR_CLOCK_PRECISE
+  GPR_TIMESPAN
 );
 
 1;
