@@ -1,5 +1,5 @@
 Grpc::XS::Channel
-new(const char *class, const char* channel, ... )
+new(const char *class, const char* target, ... )
   PREINIT:
     ChannelCTX* ctx = (ChannelCTX *)malloc( sizeof(ChannelCTX) );
     ctx->wrapped = NULL;
@@ -8,7 +8,7 @@ new(const char *class, const char* channel, ... )
       croak("Expecting a hash as input to constructor");
     }
 
-    Grpc__XS__Channel credentials = NULL;
+    Grpc__XS__ChannelCredentials creds = NULL;
 
     // channel, args_hash
     // hash->{credentials} - credentials object (optional)
@@ -20,18 +20,27 @@ new(const char *class, const char* channel, ... )
       if (!strcmp( SvPV_nolen(key), "credentials")) {
         if (!sv_isobject(ST(i+1))) {
           croak("credentials is not a credentials object");
+        } else {
+          // TODO: check if credentials object!
+          creds = (Grpc__XS__ChannelCredentials)SvPV_nolen(ST(i+1));
         }
-        // check object
-        credentials = (Grpc__XS__Channel)SvPV_nolen(ST(i+1));
       } else {
         SV *value = newSVsv(ST(i+1));
         hv_store_ent(hash,key,value,0);
       }
     }
 
-    // hash -> grpc_channel_args *args; (tool method, also used in server)
-    // long vs. string
-    // create util.c --> solve callcredentials etc..
+    grpc_channel_args args;
+    perl_grpc_read_args_array(hash, &args);
+
+    if (creds == NULL) {
+      ctx->wrapped = grpc_insecure_channel_create(target, &args, NULL);
+    } else {
+      gpr_log(GPR_DEBUG, "Initialized secure channel");
+      ctx->wrapped =
+          grpc_secure_channel_create(creds->wrapped, target, &args, NULL);
+    }
+    free(args.args);
 
     RETVAL = ctx;
   OUTPUT: RETVAL
