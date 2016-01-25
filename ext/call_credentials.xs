@@ -21,5 +21,4 @@ DESTROY(Grpc::XS::CallCredentials self)
     if (self->wrapped != NULL) {
       grpc_call_credentials_release(self->wrapped);
     }
-    free(self->wrapped);
     Safefree(self);

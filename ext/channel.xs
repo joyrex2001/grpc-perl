@@ -4,7 +4,7 @@ new(const char *class, const char* target, ... )
     ChannelCTX* ctx = (ChannelCTX *)malloc( sizeof(ChannelCTX) );
     ctx->wrapped = NULL;
   CODE:
-    if ( ( items - 2 ) % 2 ) {
+    if ( items > 2 && ( items - 2 ) % 2 ) {
       croak("Expecting a hash as input to constructor");
     }
 
@@ -12,21 +12,23 @@ new(const char *class, const char* target, ... )
 
     // channel, args_hash
     // hash->{credentials} - credentials object (optional)
-
+grpc_init();
     int i;
     HV *hash = newHV();
-    for (i = 1; i < items; i += 2 ) {
-      SV *key = ST(i);
-      if (!strcmp( SvPV_nolen(key), "credentials")) {
-        if (!sv_isobject(ST(i+1))) {
-          croak("credentials is not a credentials object");
+    if (items>2) {
+      for (i = 2; i < items; i += 2 ) {
+        SV *key = ST(i);
+        if (!strcmp( SvPV_nolen(key), "credentials")) {
+          if (!sv_isobject(ST(i+1))) {
+            croak("credentials is not a credentials object");
+          } else {
+            // TODO: check if credentials object!
+            creds = (Grpc__XS__ChannelCredentials)SvPV_nolen(ST(i+1));
+          }
         } else {
-          // TODO: check if credentials object!
-          creds = (Grpc__XS__ChannelCredentials)SvPV_nolen(ST(i+1));
+          SV *value = newSVsv(ST(i+1));
+          hv_store_ent(hash,key,value,0);
         }
-      } else {
-        SV *value = newSVsv(ST(i+1));
-        hv_store_ent(hash,key,value,0);
       }
     }
 
@@ -85,6 +87,5 @@ DESTROY(Grpc::XS::Channel self)
   CODE:
     if (self->wrapped != NULL) {
       grpc_channel_destroy(self->wrapped);
-      free(self->wrapped);
     }
     Safefree(self);

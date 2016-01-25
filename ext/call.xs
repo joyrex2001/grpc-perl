@@ -1,12 +1,10 @@
 Grpc::XS::Call
-new(const char *class, ... )
+new(const char *class,  Grpc::XS::Channel channel,  \
+    const char* method, Grpc::XS::Timeval deadline, ... )
   PREINIT:
     CallCTX* ctx = (CallCTX *)malloc( sizeof(CallCTX) );
     ctx->wrapped = NULL;
   CODE:
-    if ( ( items - 1 ) % 2 ) {
-      croak("Expecting a hash as input to constructor");
-    }
 
     // Params:
     //    * channel       - channel object
@@ -14,20 +12,19 @@ new(const char *class, ... )
     //    * deadline      - timeval object
     //    * host_override - string (optional)
 
-    HV *hash = newHV();
-    int i;
-    if (items>1) {
-      for (i = 1; i < items; i += 2 ) {
-          SV *key   = ST(i);
-          SV *value = newSVsv( ST( i + 1 ) );
-          hv_store_ent( hash, key, value, 0 );
-      }
+    if ( items > 4 ) {
+      croak("Too many variables for constructor Grpc::XS::Call");
     }
 
-    //ctx->wrapped = grpc_channel_create_call(
-    //        channel,NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue, method,
-    //        host_override, deadline, NULL););
-    //
+    const char* host_override = NULL;
+    if ( items == 4) {
+      host_override = SvPV_nolen(ST(3));
+    }
+
+    ctx->wrapped = grpc_channel_create_call(
+              channel->wrapped,NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue,
+              method, host_override, deadline->wrapped, NULL);
+
     RETVAL = ctx;
   OUTPUT: RETVAL
 
@@ -62,5 +59,4 @@ DESTROY(Grpc::XS::Call self)
     if (self->wrapped != NULL) {
       grpc_call_destroy(self->wrapped);
     }
-    free(self->wrapped);
     Safefree(self);

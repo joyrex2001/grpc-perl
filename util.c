@@ -87,10 +87,11 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   args->args = calloc(args->num_args, sizeof(grpc_arg));
 
   hv_iterinit(hash);
+
   int args_index = 0;
   while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
-    if (SvOK(value)) {
-      args->args[args_index].key = key;
+      if (SvOK(value)) {
+        args->args[args_index].key = key;
       if (is_integer(value)) {
         args->args[args_index].value.integer = SvIV(value);
       } else {

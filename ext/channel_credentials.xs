@@ -67,5 +67,4 @@ void
 DESTROY(Grpc::XS::ChannelCredentials self)
   CODE:
     grpc_channel_credentials_release(self->wrapped);
-    free(self->wrapped);
     Safefree(self);
