@@ -90,10 +90,11 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
 
   int args_index = 0;
   while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
-      if (SvOK(value)) {
-        args->args[args_index].key = key;
+    if (SvOK(value)) {
+      args->args[args_index].key = key;
       if (is_integer(value)) {
         args->args[args_index].value.integer = SvIV(value);
+        args->args[args_index].value.string = NULL;
       } else {
         args->args[args_index].value.string = SvPV_nolen(value);
       }
