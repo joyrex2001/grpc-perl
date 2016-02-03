@@ -51,7 +51,7 @@ sub write {
 	my $data    = $param{data};
 	my $options = $param{options}||{};
 
-	my $message = { 'message' => $data->serialize() };
+	my $message = { 'message' => $data->serialize() }; ## TODO: protobuf?
   if (defined($options->{'flags'})) {
     $message->{'flags'} = $options->{'flags'};
   }

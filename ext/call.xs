@@ -28,10 +28,117 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     RETVAL = ctx;
   OUTPUT: RETVAL
 
-SV *
-startBatch()
+HV *
+startBatch(const char *class, ...)
   CODE:
-  OUTPUT:
+    if ( items > 1 && ( items - 1 ) % 2 ) {
+      croak("Expecting a hash as input to constructor");
+    }
+
+    /**
+     * Start a batch of RPC actions.
+     * @param array batch Array of actions to take
+     * @return object Object with results of all actions
+    */
+
+    HV *result = newHV();
+
+    char *status_details = NULL;
+
+    grpc_op ops[8];
+    size_t op_num = 0;
+
+    grpc_metadata_array metadata;
+    grpc_metadata_array trailing_metadata;
+    grpc_metadata_array recv_metadata;
+    grpc_metadata_array recv_trailing_metadata;
+
+    grpc_metadata_array_init(&metadata);
+    grpc_metadata_array_init(&trailing_metadata);
+    grpc_metadata_array_init(&recv_metadata);
+    grpc_metadata_array_init(&recv_trailing_metadata);
+
+    int i;
+    HV *hash = newHV();
+    if (items>1) {
+      for (i = 1; i < items; i += 2 ) {
+        SV *key = ST(i);
+        SV *value = newSVsv(ST(i+1));
+
+        if (!SvOK(key)) {
+          warn("Expected an int for message flags");
+          goto cleanup;
+        }
+
+        switch(SvIV(key)) {
+          case GRPC_OP_SEND_INITIAL_METADATA:
+            if (SvTYPE(value)!=SVt_PVHV) {
+              warn("Expected a hash for GRPC_OP_SEND_INITIAL_METADATA");
+              goto cleanup;
+            }
+            if (!create_metadata_array(SvSTASH(value), &metadata)) {
+              warn("Bad metadata value given");
+              goto cleanup;
+            }
+            ops[op_num].data.send_initial_metadata.count =
+                 metadata.count;
+            ops[op_num].data.send_initial_metadata.metadata =
+                 metadata.metadata;
+            break;
+          case GRPC_OP_SEND_MESSAGE:
+            // check if value is hash
+            if (SvTYPE(value)!=SVt_PVHV) {
+              warn("Expected a hash for send message");
+              goto cleanup;
+            }
+            // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
+/*
+            SV* flags;
+            STRLEN flags_len;
+            if (hv_exists(value, "flags", 5)) {
+              SV **flags_sv = hv_fetch(value, "flags", 5, 0);
+              flags = SvPV(*flags_sv, flags_len);
+            } else {
+              warn("Missing message flags");
+              goto cleanup;
+            }
+            if (!SvIOK(flags)) {
+              warn("Expected an int for message flags");
+              goto cleanup;
+            }
+            /*
+            ops[op_num].flags = SvIV(flags) & GRPC_WRITE_USED_MASK;
+            // ops[op_num].data.send_message = hash->{message}; // string
+            SV *msg = get_hash_value(value,"message");
+            if (!SvOK(msg)) {
+              warn("Expected a string for send message");
+              goto cleanup;
+            }
+//            int len;
+//            char *msg = SvPV(_msg,len);
+//            ops[op_num].data.send_message = string_to_byte_buffer(msg,len);
+            */
+            break;
+          case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
+            break;
+
+
+        }
+
+      }
+    }
+
+  cleanup:
+    grpc_metadata_array_destroy(&metadata);
+    grpc_metadata_array_destroy(&trailing_metadata);
+    grpc_metadata_array_destroy(&recv_metadata);
+    grpc_metadata_array_destroy(&recv_trailing_metadata);
+    if (status_details != NULL) {
+      gpr_free(status_details);
+    }
+
+    RETVAL = result;
+  OUTPUT: RETVAL
 
 const char*
 getPeer(Grpc::XS::Call self)

@@ -335,6 +335,7 @@ PHP_METHOD(Call, startBatch) {
             zend_throw_exception(spl_ce_InvalidArgumentException,
                                  "Expected an int for message flags",
                                  1 TSRMLS_CC);
+            goto cleanup;
           }
           ops[op_num].flags = Z_LVAL_PP(message_flags) & GRPC_WRITE_USED_MASK;
         }

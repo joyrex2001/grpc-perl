@@ -10,6 +10,7 @@
 #include <grpc/grpc.h>
 #include <grpc/byte_buffer_reader.h>
 #include <grpc/support/slice.h>
+#include <grpc/support/alloc.h>
 
 grpc_completion_queue *completion_queue;
 
@@ -53,20 +54,6 @@ void grpc_perl_shutdown_completion_queue() {
   grpc_completion_queue_destroy(completion_queue);
 }
 
-int is_integer(SV* str) {
-  STRLEN len;
-  const char *s;
-  s = SvPV_const(str, len);
-  int i=0;
-  for (i=0;i<len;i++) {
-    if (*s < '0' || *s > '9') {
-      return 0;
-    }
-    s++;
-  }
-  return 1;
-}
-
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
@@ -81,18 +68,17 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   args->num_args = 0;
   hv_iterinit(hash);
   while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
-    args->num_args = args->num_args+1;
+    args->num_args += 1;
   }
 
   args->args = calloc(args->num_args, sizeof(grpc_arg));
 
-  hv_iterinit(hash);
-
   int args_index = 0;
+  hv_iterinit(hash);
   while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
     if (SvOK(value)) {
       args->args[args_index].key = key;
-      if (is_integer(value)) {
+      if (SvIOK(value)) {
         args->args[args_index].value.integer = SvIV(value);
         args->args[args_index].value.string = NULL;
       } else {
@@ -103,4 +89,51 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
     }
     args_index++;
   }
+}
+
+/* Creates and returns a perl hash object with the data in a
+ * grpc_metadata_array. Returns NULL on failure */
+
+HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
+}
+
+/* Populates a grpc_metadata_array with the data in a perl hash object.
+   Returns true on success and false on failure */
+
+bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
+  // handle hashes
+  if (SvTYPE(hash)!=SVt_PVHV) {
+    croak("expected hash for args");
+  }
+
+  char* key;
+  I32 keylen;
+  SV* value;
+
+  grpc_metadata_array_init(metadata);
+
+  // count items in hash
+  metadata->capacity = 0;
+  hv_iterinit(hash);
+  while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
+    metadata->capacity += 1;
+  }
+
+  metadata->metadata = gpr_malloc(metadata->capacity * sizeof(grpc_metadata));
+
+  metadata->count = 0;
+  hv_iterinit(hash);
+  while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
+    if (SvOK(value)) {
+      metadata->metadata[metadata->count].key = key;
+      metadata->metadata[metadata->count].value =
+            SvPV(value, metadata->metadata[metadata->count].value_length);
+      metadata->count += 1;
+    } else {
+      croak("args values must be int or string");
+      return false;
+    }
+  }
+
+  return true;
 }

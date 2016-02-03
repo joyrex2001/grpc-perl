@@ -44,7 +44,7 @@ sub responses {
             OP_RECV_MESSAGE => true,
 	})->{message};
     while (defined($response)) {
-		## yield $self->deserializeResponse($response); ## TODO: PORT!
+		## yield $self->deserializeResponse($response); ## TODO: PORT
 		$response = $self->{_call}->startBatch({
                 OP_RECV_MESSAGE => true,
         })->{message};
