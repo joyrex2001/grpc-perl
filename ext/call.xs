@@ -29,7 +29,7 @@ new(const char *class,  Grpc::XS::Channel channel,  \
   OUTPUT: RETVAL
 
 HV *
-startBatch(const char *class, ...)
+startBatch(Grpc::XS::Call self, ...)
   CODE:
     if ( items > 1 && ( items - 1 ) % 2 ) {
       croak("Expecting a hash as input to constructor");
@@ -47,6 +47,15 @@ startBatch(const char *class, ...)
 
     grpc_op ops[8];
     size_t op_num = 0;
+
+    grpc_byte_buffer *message;
+    grpc_status_code status;
+    grpc_call_error error;
+    size_t status_details_capacity = 0;
+    int cancelled;
+
+    char *message_str;
+    size_t message_len;
 
     grpc_metadata_array metadata;
     grpc_metadata_array trailing_metadata;
@@ -93,8 +102,8 @@ startBatch(const char *class, ...)
             }
             // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
             SV **flags;
-            if (hv_exists(SvSTASH(value), "flags", 5)) {
-              flags = hv_fetch(SvSTASH(value), "flags", 5, 0);
+            if (hv_exists(SvSTASH(value), "flags", sizeof("flags"))) {
+              flags = hv_fetch(SvSTASH(value), "flags", sizeof("flags"), 0);
             } else {
               warn("Missing message flags");
               goto cleanup;
@@ -105,29 +114,155 @@ startBatch(const char *class, ...)
             }
             ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
             // ops[op_num].data.send_message = hash->{message}; // string
-            SV **message;
-            if (hv_exists(SvSTASH(value), "message", 7)) {
-              message = hv_fetch(SvSTASH(value), "message", 7, 0);
+            SV **message_sv;
+            if (hv_exists(SvSTASH(value), "message", sizeof("message"))) {
+              message_sv = hv_fetch(SvSTASH(value),"message",sizeof("message"),0);
             } else {
               warn("Missing send message");
               goto cleanup;
             }
-            if (!SvOK(*flags)) {
+            if (!SvOK(*message_sv)) {
               warn("Expected an string for send message");
               goto cleanup;
             }
-            STRLEN len;
-            char *msg = SvPV(*message,len);
-            ops[op_num].data.send_message = string_to_byte_buffer(msg,len);
+            message_str = SvPV(*message_sv,message_len);
+            ops[op_num].data.send_message =
+                        string_to_byte_buffer(message_str,message_len);
             break;
           case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
             break;
-
-
+          case GRPC_OP_SEND_STATUS_FROM_SERVER:
+            // check if value is hash
+            if (SvTYPE(value)!=SVt_PVHV) {
+              warn("Expected a hash for send message");
+              goto cleanup;
+            }
+            // hash->{metadata}
+            if (hv_exists(SvSTASH(value), "metadata", sizeof("metadata"))) {
+              SV** inner_value;
+              inner_value = hv_fetch(SvSTASH(value), "metadata", sizeof("metadata"), 0);
+              if (!create_metadata_array(SvSTASH(*inner_value), &trailing_metadata)) {
+                warn("Bad trailing metadata value given");
+                goto cleanup;
+              }
+              ops[op_num].data.send_status_from_server.trailing_metadata =
+                  trailing_metadata.metadata;
+              ops[op_num].data.send_status_from_server.trailing_metadata_count =
+                  trailing_metadata.count;
+            }
+            // hash->{code}
+            if (hv_exists(SvSTASH(value), "code", sizeof("code"))) {
+              SV** inner_value;
+              inner_value = hv_fetch(SvSTASH(value), "code", sizeof("code"), 0);
+              if (!SvIOK(*inner_value)) {
+                warn("Status code must be an integer");
+                goto cleanup;
+              }
+              ops[op_num].data.send_status_from_server.status =
+                                                      SvIV(*inner_value);
+            } else {
+              warn("Integer status code is required");
+              goto cleanup;
+            }
+            // hash->{details}
+            if (hv_exists(SvSTASH(value), "details", sizeof("details"))) {
+              SV** inner_value;
+              inner_value = hv_fetch(SvSTASH(value), "details", sizeof("details"), 0);
+              if (!SvOK(*inner_value)) {
+                warn("Status details must be a string");
+                goto cleanup;
+              }
+              ops[op_num].data.send_status_from_server.status_details =
+                  SvPV_nolen(*inner_value);
+            } else {
+              warn("String status details is required");
+              goto cleanup;
+            }
+            break;
+          case GRPC_OP_RECV_INITIAL_METADATA:
+            ops[op_num].data.recv_initial_metadata = &recv_metadata;
+            break;
+          case GRPC_OP_RECV_MESSAGE:
+            ops[op_num].data.recv_message = &message;
+            break;
+          case GRPC_OP_RECV_STATUS_ON_CLIENT:
+            ops[op_num].data.recv_status_on_client.trailing_metadata =
+                &recv_trailing_metadata;
+            ops[op_num].data.recv_status_on_client.status = &status;
+            ops[op_num].data.recv_status_on_client.status_details =
+                &status_details;
+            ops[op_num].data.recv_status_on_client.status_details_capacity =
+                &status_details_capacity;
+            break;
+          case GRPC_OP_RECV_CLOSE_ON_SERVER:
+            ops[op_num].data.recv_close_on_server.cancelled = &cancelled;
+            break;
+          default:
+            warn("Unrecognized key in batch");
+            goto cleanup;
         }
-
+        ops[op_num].op = (grpc_op_type)index;
+        ops[op_num].flags = 0;
+        ops[op_num].reserved = NULL;
+        op_num++;
+      }
+      error = grpc_call_start_batch(self->wrapped, ops, op_num, self->wrapped,
+                                      NULL);
+      if (error != GRPC_CALL_OK) {
+        warn("start_batch was called incorrectly");
+        goto cleanup;
       }
     }
+//      grpc_completion_queue_pluck(completion_queue, self->wrapped,
+//                                  gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+      for (i = 0; i < op_num; i++) {
+        switch(ops[i].op) {
+          case GRPC_OP_SEND_INITIAL_METADATA:
+//            add_property_bool(result, "send_metadata", true);
+            break;
+          case GRPC_OP_SEND_MESSAGE:
+//            add_property_bool(result, "send_message", true);
+            break;
+          case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
+//            add_property_bool(result, "send_close", true);
+            break;
+          case GRPC_OP_SEND_STATUS_FROM_SERVER:
+//            add_property_bool(result, "send_status", true);
+            break;
+          case GRPC_OP_RECV_INITIAL_METADATA:
+//            array = grpc_parse_metadata_array(&recv_metadata);
+//            add_property_zval(result, "metadata", array);
+//            Z_DELREF_P(array);
+            break;
+          case GRPC_OP_RECV_MESSAGE:
+            byte_buffer_to_string(message, &message_str, &message_len);
+            if (message_str == NULL) {
+//              add_property_null(result, "message");
+            } else {
+  //            add_property_stringl(result, "message", message_str, message_len,
+  //                                 false);
+            }
+            break;
+          case GRPC_OP_RECV_STATUS_ON_CLIENT:
+          /*
+            MAKE_STD_ZVAL(recv_status);
+            object_init(recv_status);
+            array = grpc_parse_metadata_array(&recv_trailing_metadata);
+            add_property_zval(recv_status, "metadata", array);
+            Z_DELREF_P(array);
+            add_property_long(recv_status, "code", status);
+            add_property_string(recv_status, "details", status_details, true);
+            add_property_zval(result, "status", recv_status);
+            Z_DELREF_P(recv_status);
+          */
+            break;
+          case GRPC_OP_RECV_CLOSE_ON_SERVER:
+  //          add_property_bool(result, "cancelled", cancelled);
+            break;
+          default:
+            break;
+        }
+      }
 
   cleanup:
     grpc_metadata_array_destroy(&metadata);

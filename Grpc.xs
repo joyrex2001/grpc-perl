@@ -4,6 +4,7 @@
 #include "XSUB.h"
 #include "ppport.h"
 
+#include "util.h"
 #include "ext/call.h"
 #include "ext/call_credentials.h"
 #include "ext/channel.h"
@@ -12,7 +13,6 @@
 #include "ext/server.h"
 #include "ext/server_credentials.h"
 #include "ext/timeval.h"
-#include "util.h"
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
 
