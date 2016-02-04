@@ -18,7 +18,7 @@ grpc_init();
     if (items>2) {
       for (i = 2; i < items; i += 2 ) {
         SV *key = ST(i);
-        if (!strcmp( SvPV_nolen(key), "credentials")) {
+        if (!strcmp(SvPV_nolen(key), "credentials")) {
           if (!sv_isobject(ST(i+1))) {
             croak("credentials is not a credentials object");
           } else {

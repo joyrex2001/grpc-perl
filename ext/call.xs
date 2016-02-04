@@ -92,32 +92,33 @@ startBatch(const char *class, ...)
               goto cleanup;
             }
             // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
-/*
-            SV* flags;
-            STRLEN flags_len;
-            if (hv_exists(value, "flags", 5)) {
-              SV **flags_sv = hv_fetch(value, "flags", 5, 0);
-              flags = SvPV(*flags_sv, flags_len);
+            SV **flags;
+            if (hv_exists(SvSTASH(value), "flags", 5)) {
+              flags = hv_fetch(SvSTASH(value), "flags", 5, 0);
             } else {
               warn("Missing message flags");
               goto cleanup;
             }
-            if (!SvIOK(flags)) {
+            if (!SvIOK(*flags)) {
               warn("Expected an int for message flags");
               goto cleanup;
             }
-            /*
-            ops[op_num].flags = SvIV(flags) & GRPC_WRITE_USED_MASK;
+            ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
             // ops[op_num].data.send_message = hash->{message}; // string
-            SV *msg = get_hash_value(value,"message");
-            if (!SvOK(msg)) {
-              warn("Expected a string for send message");
+            SV **message;
+            if (hv_exists(SvSTASH(value), "message", 7)) {
+              message = hv_fetch(SvSTASH(value), "message", 7, 0);
+            } else {
+              warn("Missing send message");
               goto cleanup;
             }
-//            int len;
-//            char *msg = SvPV(_msg,len);
-//            ops[op_num].data.send_message = string_to_byte_buffer(msg,len);
-            */
+            if (!SvOK(*flags)) {
+              warn("Expected an string for send message");
+              goto cleanup;
+            }
+            STRLEN len;
+            char *msg = SvPV(*message,len);
+            ops[op_num].data.send_message = string_to_byte_buffer(msg,len);
             break;
           case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
             break;
