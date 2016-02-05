@@ -95,6 +95,45 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
  * grpc_metadata_array. Returns NULL on failure */
 
 HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
+
+  int count = metadata_array->count;
+  grpc_metadata *elements = metadata_array->metadata;
+  int i;
+  HV* hash;
+
+  char *str_key;
+  char *str_val;
+  size_t key_len;
+
+  grpc_metadata *elem;
+  for (i = 0; i < count; i++) {
+    elem = &elements[i];
+    key_len = strlen(elem->key);
+    str_key = calloc(key_len + 1, sizeof(char));
+    memcpy(str_key, elem->key, key_len);
+    str_val = calloc(elem->value_length + 1, sizeof(char));
+    memcpy(str_val, elem->value, elem->value_length);
+/*
+    if (zend_hash_find(array_hash, str_key, key_len, (void **)data) ==
+        SUCCESS) {
+      if (Z_TYPE_P(*data) != IS_ARRAY) {
+        zend_throw_exception(zend_exception_get_default(),
+                             "Metadata hash somehow contains wrong types.",
+                             1 TSRMLS_CC);
+          free(str_key);
+          free(str_val);
+          return NULL;
+      }
+      add_next_index_stringl(*data, str_val, elem->value_length, false);
+    } else {
+      MAKE_STD_ZVAL(inner_array);
+      array_init(inner_array);
+      add_next_index_stringl(inner_array, str_val, elem->value_length, false);
+      add_assoc_zval(array, str_key, inner_array);
+    }
+    */
+  }
+  return hash;
 }
 
 /* Populates a grpc_metadata_array with the data in a perl hash object.

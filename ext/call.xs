@@ -68,7 +68,6 @@ startBatch(Grpc::XS::Call self, ...)
     grpc_metadata_array_init(&recv_trailing_metadata);
 
     int i;
-    HV *hash = newHV();
     if (items>1) {
       for (i = 1; i < items; i += 2 ) {
         SV *key = ST(i);
@@ -213,56 +212,54 @@ startBatch(Grpc::XS::Call self, ...)
         goto cleanup;
       }
     }
-//      grpc_completion_queue_pluck(completion_queue, self->wrapped,
-//                                  gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
-      for (i = 0; i < op_num; i++) {
-        switch(ops[i].op) {
-          case GRPC_OP_SEND_INITIAL_METADATA:
-//            add_property_bool(result, "send_metadata", true);
-            break;
-          case GRPC_OP_SEND_MESSAGE:
-//            add_property_bool(result, "send_message", true);
-            break;
-          case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
-//            add_property_bool(result, "send_close", true);
-            break;
-          case GRPC_OP_SEND_STATUS_FROM_SERVER:
-//            add_property_bool(result, "send_status", true);
-            break;
-          case GRPC_OP_RECV_INITIAL_METADATA:
-//            array = grpc_parse_metadata_array(&recv_metadata);
-//            add_property_zval(result, "metadata", array);
-//            Z_DELREF_P(array);
-            break;
-          case GRPC_OP_RECV_MESSAGE:
-            byte_buffer_to_string(message, &message_str, &message_len);
-            if (message_str == NULL) {
-//              add_property_null(result, "message");
-            } else {
-  //            add_property_stringl(result, "message", message_str, message_len,
-  //                                 false);
-            }
-            break;
-          case GRPC_OP_RECV_STATUS_ON_CLIENT:
-          /*
-            MAKE_STD_ZVAL(recv_status);
-            object_init(recv_status);
-            array = grpc_parse_metadata_array(&recv_trailing_metadata);
-            add_property_zval(recv_status, "metadata", array);
-            Z_DELREF_P(array);
-            add_property_long(recv_status, "code", status);
-            add_property_string(recv_status, "details", status_details, true);
-            add_property_zval(result, "status", recv_status);
-            Z_DELREF_P(recv_status);
-          */
-            break;
-          case GRPC_OP_RECV_CLOSE_ON_SERVER:
-  //          add_property_bool(result, "cancelled", cancelled);
-            break;
-          default:
-            break;
-        }
+
+    grpc_completion_queue_pluck(completion_queue, self->wrapped,
+                                gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+
+    for (i = 0; i < op_num; i++) {
+      switch(ops[i].op) {
+        case GRPC_OP_SEND_INITIAL_METADATA:
+          hv_store(result,"send_metadata",strlen("send_metadata"),newSViv(TRUE),0);
+          break;
+        case GRPC_OP_SEND_MESSAGE:
+          hv_store(result,"send_message",strlen("send_message"),newSViv(TRUE),0);
+          break;
+        case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
+          hv_store(result,"send_close",strlen("send_close"),newSViv(TRUE),0);
+          break;
+        case GRPC_OP_SEND_STATUS_FROM_SERVER:
+          hv_store(result,"send_status",strlen("send_status"),newSViv(TRUE),0);
+          break;
+        case GRPC_OP_RECV_INITIAL_METADATA:
+          hv_store(result,"metadata",strlen("metadata"),
+               newRV_noinc((SV *)grpc_parse_metadata_array(&recv_metadata)),0);
+          break;
+        case GRPC_OP_RECV_MESSAGE:
+          byte_buffer_to_string(message, &message_str, &message_len);
+          if (message_str == NULL) {
+            hv_store(result,"message",strlen("message"),newSV(0),0);//undef
+          } else {
+            hv_store(result,"message",strlen("message"),newSVpv(message_str,message_len),0);
+          }
+          break;
+        case GRPC_OP_RECV_STATUS_ON_CLIENT:
+          if(1){
+            HV *recv_status;
+            hv_store(recv_status,"metadata",strlen("metadata"),
+              newRV_noinc((SV *)grpc_parse_metadata_array(&recv_trailing_metadata)),0);
+            hv_store(recv_status,"code",strlen("code"),newSViv(status),0);
+            hv_store(recv_status, "details", strlen("details"),
+                        newSVpv(status_details,strlen(status_details)), 0);
+            hv_store(result,"status",strlen("status"),newRV_noinc((SV *)recv_status),0);
+          }
+          break;
+        case GRPC_OP_RECV_CLOSE_ON_SERVER:
+          hv_store(result,"cancelled",strlen("cancelled"),newSViv(cancelled),0);
+          break;
+        default:
+          break;
       }
+    }
 
   cleanup:
     grpc_metadata_array_destroy(&metadata);
