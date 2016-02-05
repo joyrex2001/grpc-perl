@@ -4,6 +4,8 @@ use warnings;
 
 use base qw(Grpc::Stub::AbstractCall);
 
+use Grpc::Constants;
+
 use constant true  => 1;
 use constant false => 0;
 
@@ -26,10 +28,10 @@ sub start{
             $message->{'flags'} = $options->{'flags'};
     }
     my $event = $self->{_call}->startBatch({
-            OP_SEND_INITIAL_METADATA => $metadata,
-            OP_RECV_INITIAL_METADATA => true,
-            OP_SEND_MESSAGE => $message,
-            OP_SEND_CLOSE_FROM_CLIENT => true,
+            GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
+            GRPC_OP_RECV_INITIAL_METADATA() => true,
+            GRPC_OP_SEND_MESSAGE() => $message,
+            GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
     });
 
    	$self->{_metadata} = $event->{metadata};
@@ -41,12 +43,12 @@ sub responses {
 	my $self = shift;
 
 	my $response = $self->{_call}->startBatch({
-            OP_RECV_MESSAGE => true,
+            GRPC_OP_RECV_MESSAGE() => true,
 	})->{message};
     while (defined($response)) {
 		## yield $self->deserializeResponse($response); ## TODO: PORT
 		$response = $self->{_call}->startBatch({
-                OP_RECV_MESSAGE => true,
+                GRPC_OP_RECV_MESSAGE() => true,
         })->{message};
     }
  }
@@ -59,7 +61,7 @@ sub responses {
 sub getStatus {
 	my $self = shift;
 	my $status_event = $self->{_call}->startBatch({
-            OP_RECV_STATUS_ON_CLIENT => true,
+            GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
 	});
 
 	return $status_event->{status};

@@ -4,6 +4,8 @@ use warnings;
 
 use base qw(Grpc::Stub::AbstractCall);
 
+use Grpc::Constants;
+
 use constant true  => 1;
 use constant false => 0;
 
@@ -14,7 +16,7 @@ sub start {
 	my $metadata = shift || {};
 
 	$self->{_call}->startBatch({
-            OP_SEND_INITIAL_METADATA => $metadata,
+            GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
 	});
 }
 
@@ -25,9 +27,9 @@ sub start {
 sub read {
 	my $self = shift;
 
-  my $batch = { OP_RECV_MESSAGE => true };
+  my $batch = { GRPC_OP_RECV_MESSAGE() => true };
 	if (!defined($self->{_metadata})) {
-		$batch->{OP_RECV_INITIAL_METADATA} = true;
+		$batch->{GRPC_OP_RECV_INITIAL_METADATA()} = true;
   }
 
   my $read_event = $self->{_call}->startBatch($batch);
@@ -56,7 +58,7 @@ sub write {
     $message->{'flags'} = $options->{'flags'};
   }
   $self->{_call}->startBatch({
-            OP_SEND_MESSAGE => $message,
+            GRPC_OP_SEND_MESSAGE() => $message,
   });
 }
 
@@ -65,7 +67,7 @@ sub write {
 sub writesDone {
 	my $self = shift;
 	$self->{_call}->startBatch({
-            OP_SEND_CLOSE_FROM_CLIENT => true,
+            GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
 	});
 }
 
@@ -77,7 +79,7 @@ sub writesDone {
 sub getStatus {
 	my $self = shift;
 	my $status_event = $self->{_call}->startBatch({
-            OP_RECV_STATUS_ON_CLIENT => true,
+            GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
 	});
 
 	return $status_event->{status};

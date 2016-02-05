@@ -3,8 +3,9 @@ use strict;
 use Data::Dumper;
 use Test::More;
 
-plan tests => 15;
+plan tests => 16;
 
+use_ok('Grpc::Constants');
 use_ok('Grpc::Stub::AbstractCall');
 use_ok('Grpc::Stub::BaseStub');
 use_ok('Grpc::Stub::BidiStreamingCall');

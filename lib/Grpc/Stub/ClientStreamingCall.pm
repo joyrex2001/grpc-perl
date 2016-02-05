@@ -4,6 +4,8 @@ use warnings;
 
 use base qw(Grpc::Stub::AbstractCall);
 
+use Grpc::Constants;
+
 use constant true  => 1;
 use constant false => 0;
 
@@ -14,7 +16,7 @@ sub start {
 	my $metadata = shift || {};
 
 	$self->{_call}->startBatch({
-            OP_SEND_INITIAL_METADATA => $metadata,
+            GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
 	});
 }
 
@@ -36,7 +38,7 @@ sub write {
             $message->{'flags'} = $options->{'flags'};
     }
     $self->{_call}->startBatch({
-            OP_SEND_MESSAGE => $message,
+            GRPC_OP_SEND_MESSAGE() => $message,
     });
 }
 
@@ -48,10 +50,10 @@ sub wait {
 	my $self  = shift;
 
 	my $event = $self->{_call}->startBatch({
-            OP_SEND_CLOSE_FROM_CLIENT => true,
-            OP_RECV_INITIAL_METADATA => true,
-            OP_RECV_MESSAGE => true,
-            OP_RECV_STATUS_ON_CLIENT => true,
+            GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
+            GRPC_OP_RECV_INITIAL_METADATA() => true,
+            GRPC_OP_RECV_MESSAGE() => true,
+            GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
 	});
 
     if (!defined($self->{_metadata})) {

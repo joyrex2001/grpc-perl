@@ -9,6 +9,8 @@ use Grpc::XS;
 use Grpc::XS::Channel;
 use Grpc::XS::Timeval;
 
+use Grpc::Constants;
+
 use Grpc::Stub::UnaryCall;
 use Grpc::Stub::ClientStreamingCall;
 use Grpc::Stub::ServerStreamingCall;
@@ -110,10 +112,10 @@ sub _checkConnectivityState {
 	my $self = shift;
 	my $new_state = shift;
 
-	if ($new_state == 1){ #TODO #\Grpc\CHANNEL_READY) {
+	if ($new_state == GRPC_CHANNEL_READY()){
     	return true;
 	}
-	if ($new_state == 1){ #TODO #\Grpc\CHANNEL_FATAL_FAILURE) {
+	if ($new_state == GRPC_CHANNEL_FATAL_FAILURE()){
     	die('Failed to connect to server');
 	}
 
