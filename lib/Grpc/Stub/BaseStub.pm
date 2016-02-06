@@ -42,7 +42,7 @@ sub new {
 
 	if (!defined($credentials)) {
 		die("The 'credentials' key is now required. Please see one of the ".
-			  "ChannelCredentials::create methods");
+			  "Grpc::XS::ChannelCredentials::create methods");
 	}
 
 	my $channel = new Grpc::XS::Channel($hostname,%param);
@@ -138,8 +138,7 @@ sub _get_jwt_aud_uri {
   if ($method =~ m|^(.*)/[^/]+$|) {
 		$service_name = $1;
   } else {
-		die("InvalidArgumentException: ".
-				"service name must have a slash");
+		die("InvalidArgumentException: service name must have a slash");
 	}
 
   return 'https://'.$self->{_hostname}.$service_name;
@@ -152,9 +151,9 @@ sub _validate_and_normalize_metadata {
   my $metadata_copy = {};
   foreach my $key (keys %{$metadata}) {
 		if ($key !~ /^[A-Za-z\d_-]+$/) {
-                die("InvalidArgumentException: ".
-                    "Metadata keys must be nonempty strings containing only ".
-                    "alphanumeric characters, hyphens and underscores");
+			die("InvalidArgumentException: ".
+			    "Metadata keys must be nonempty strings containing only ".
+			    "alphanumeric characters, hyphens and underscores");
 		}
 		$metadata_copy->{lc($key)} = $metadata->{$key};
   }

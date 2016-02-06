@@ -17,27 +17,26 @@ use Grpc::XS::Timeval;
 
 sub new {
 	my $proto = shift;
-	my %param = @_;
-	my $channel     = $param{channel};
-	my $method      = $param{method};
-	my $deserialize = $param{deserialize};
-	my $timeout     = $param{timeout};
-	my $call_credentials_callback = $param{call_credentials_callback};
+	my $channel     = shift;
+	my $method      = shift;
+	my $deserialize = shift;
+	my %options     = @_;
+	my $timeout     = $options{timeout};
+	my $call_credentials_callback = $options{call_credentials_callback};
 
 	my $deadline;
 	if (defined($timeout) && $timeout =~ /^\d+$/) {
-    my $now = Grpc::XS::Timeval::now();
-    my $delta = new Grpc::XS::Timeval($timeout);
-    $deadline = Grpc::XS::Timeval::add($now,$delta);
-  } else {
-    $deadline = Grpc::XS::Timeval::infFuture();
+	  my $now = Grpc::XS::Timeval::now();
+	  my $delta = new Grpc::XS::Timeval($timeout);
+	  $deadline = Grpc::XS::Timeval::add($now,$delta);
+	} else {
+	  $deadline = Grpc::XS::Timeval::infFuture();
 	}
 
 	my $call = new Grpc::XS::Call($channel, $method, $deadline);
 
 	my $call_credentials;
 	if (defined($call_credentials_callback)) {
-		## TODO
 		$call_credentials = Grpc::XS::CallCredentials::createFromPlugin(
 										$call_credentials_callback);
 		$call->setCredentials($call_credentials);
@@ -97,7 +96,6 @@ sub deserializeResponse {
 sub setCallCredentials {
 	my $self = shift;
 	my $call_credentials = shift;
-
 	$self->{_call}->setCredentials($call_credentials);
 }
 

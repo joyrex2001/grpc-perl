@@ -16,7 +16,7 @@ sub start {
 	my $metadata = shift || {};
 
 	$self->{_call}->startBatch({
-            GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
+        GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
 	});
 }
 
@@ -34,12 +34,12 @@ sub write {
 	my $options = $param{options}||{};
 
 	my $message = { 'message' => $data->serialize() };
-    if (defined($options->{'flags'})) {
-            $message->{'flags'} = $options->{'flags'};
-    }
-    $self->{_call}->startBatch({
-            GRPC_OP_SEND_MESSAGE() => $message,
-    });
+	if (defined($options->{'flags'})) {
+		$message->{'flags'} = $options->{'flags'};
+	}
+	$self->{_call}->startBatch({
+	      GRPC_OP_SEND_MESSAGE() => $message,
+	});
 }
 
 ## Wait for the server to respond with data and a status.
@@ -56,9 +56,9 @@ sub wait {
             GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
 	});
 
-    if (!defined($self->{_metadata})) {
-    	$self->{_metadata} = $event->{metadata};
-    }
+  if (!defined($self->{_metadata})) {
+		$self->{_metadata} = $event->{metadata};
+  }
 
 	return $self->deserializeResponse($event->{message},$event->{status});
 }

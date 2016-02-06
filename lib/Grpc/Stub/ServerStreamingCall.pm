@@ -24,34 +24,36 @@ sub start{
 	my $options = $param{options}||{};
 
 	my $message = { 'message' => $data->serialize() };
-    if (defined($options->{'flags'})) {
-            $message->{'flags'} = $options->{'flags'};
-    }
-    my $event = $self->{_call}->startBatch({
-            GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
-            GRPC_OP_RECV_INITIAL_METADATA() => true,
-            GRPC_OP_SEND_MESSAGE() => $message,
-            GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
-    });
+	if (defined($options->{'flags'})) {
+		$message->{'flags'} = $options->{'flags'};
+	}
+	my $event = $self->{_call}->startBatch({
+	        GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
+	        GRPC_OP_RECV_INITIAL_METADATA() => true,
+	        GRPC_OP_SEND_MESSAGE() => $message,
+	        GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
+	});
 
-   	$self->{_metadata} = $event->{metadata};
+	$self->{_metadata} = $event->{metadata};
 }
 
-## @return An iterator of response values
+## @return An array of response values
 
 sub responses {
 	my $self = shift;
 
+	my @responses;
 	my $response = $self->{_call}->startBatch({
-            GRPC_OP_RECV_MESSAGE() => true,
+								GRPC_OP_RECV_MESSAGE() => true,
 	})->{message};
-    while (defined($response)) {
-		## yield $self->deserializeResponse($response); ## TODO: PORT
+	while (defined($response)) {
+		push @responses,$self->deserializeResponse($response);
 		$response = $self->{_call}->startBatch({
                 GRPC_OP_RECV_MESSAGE() => true,
-        })->{message};
-    }
- }
+    })->{message};
+  }
+	return @responses;
+}
 
 ## Wait for the server to send the status, and return it.
 ##

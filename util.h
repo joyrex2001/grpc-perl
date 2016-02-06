@@ -7,6 +7,7 @@
 #include "ppport.h"
 
 #include <grpc/grpc.h>
+#include <grpc/grpc_security.h>
 
 grpc_byte_buffer *string_to_byte_buffer(char *string, size_t length);
 
@@ -25,5 +26,11 @@ void grpc_perl_shutdown_completion_queue();
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args);
 HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array);
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata);
+
+void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
+                         grpc_credentials_plugin_metadata_cb cb,
+                         void *user_data);
+
+void plugin_destroy_state(void *ptr);
 
 #endif

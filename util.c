@@ -93,7 +93,6 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
 
 /* Creates and returns a perl hash object with the data in a
  * grpc_metadata_array. Returns NULL on failure */
-
 HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
   HV* hash;
   grpc_metadata *elements = metadata_array->metadata;
@@ -123,7 +122,6 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
 
 /* Populates a grpc_metadata_array with the data in a perl hash object.
    Returns true on success and false on failure */
-
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
@@ -160,4 +158,52 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   }
 
   return true;
+}
+
+/* Callback function for plugin creds API */
+void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
+                         grpc_credentials_plugin_metadata_cb cb,
+                         void *user_data) {
+  SV* callback = (SV*)ptr;
+
+  HV *hash;
+  hv_store(hash,"service_url",strlen("service_url"),
+            newSVpv(context.service_url,strlen(context.service_url)),0);
+  hv_store(hash,"method_name",strlen("method_name"),
+            newSVpv(context.method_name,strlen(context.method_name)),0);
+
+  dSP;
+  ENTER;
+  SAVETMPS;
+  PUSHMARK(SP);
+  XPUSHs(sv_2mortal((SV*)hash));
+  PUTBACK;
+  int count = call_sv(callback, G_SCALAR);
+  SPAGAIN;
+
+  if (count!=1) {
+    croak("callback returned more than 1 value");
+  }
+
+  SV* retval = POPs;
+  grpc_metadata_array metadata;
+  if (!create_metadata_array((HV*)retval, &metadata)) {
+    croak("invalid metadata");
+    grpc_metadata_array_destroy(&metadata);
+  }
+
+  PUTBACK;
+  FREETMPS;
+  LEAVE;
+
+  /* TODO: handle error */
+  grpc_status_code code = GRPC_STATUS_OK;
+
+  /* Pass control back to core */
+  cb(user_data, metadata.metadata, metadata.count, code, NULL);
+}
+
+/* Cleanup function for plugin creds API */
+void plugin_destroy_state(void *ptr) {
+  SV *state = (SV *)ptr;
 }
