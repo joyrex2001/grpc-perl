@@ -26,12 +26,12 @@ use constant false => 0;
 ##    - 'grpc.primary_user_agent': (optional) a user-agent string
 
 sub new {
-	my $proto = shift;
-	my %param = @_;
-	my $hostname           = $param{hostname};  ## TODO: options vs params!
-	my $update_metadata    = $param{update_metadata};
-	my $primary_user_agent = $param{primary_user_agent};
-	my $credentials        = $param{credentials};
+	my $proto    = shift;
+	my $hostname = shift;
+	my %param		 = @_;
+	my $update_metadata    = $param{"update_metadata"};
+	my $primary_user_agent = $param{"grpc.primary_user_agent"};
+	my $credentials        = $param{"credentials"};
 
 	if (defined($primary_user_agent)) {
 		$primary_user_agent .= " ";
@@ -41,12 +41,11 @@ sub new {
 	$primary_user_agent = "grpc-perl/".($Grpc::XS::VERSION);
 
 	if (!defined($credentials)) {
-           die("The 'credentials' key is now ".
-               "required. Please see one of the ".
-  			   "ChannelCredentials::create methods");
+		die("The 'credentials' key is now required. Please see one of the ".
+			  "ChannelCredentials::create methods");
 	}
 
-	my $channel = new Grpc::XS::Channel(%param); ## TODO: XS!
+	my $channel = new Grpc::XS::Channel($hostname,%param);
 
 	my $self = {
 		'_hostname'           => $hostname,

@@ -8,7 +8,7 @@ use Grpc::XS::Timeval;
 
 ## Create a new Call wrapper object.
 ##
-## @param Channel  $channel     The channel to communicate on
+## @param Channel  $channel     The channel object to communicate on
 ## @param string   $method      The method to call on the
 ##                              remote server
 ## @param callback $deserialize A callback function to deserialize
@@ -18,7 +18,7 @@ use Grpc::XS::Timeval;
 sub new {
 	my $proto = shift;
 	my %param = @_;
-	my $channel     = $param{hostname}; ## TODO: options vs params!
+	my $channel     = $param{channel};
 	my $method      = $param{method};
 	my $deserialize = $param{deserialize};
 	my $timeout     = $param{timeout};
@@ -37,6 +37,7 @@ sub new {
 
 	my $call_credentials;
 	if (defined($call_credentials_callback)) {
+		## TODO
 		$call_credentials = Grpc::XS::CallCredentials::createFromPlugin(
 										$call_credentials_callback);
 		$call->setCredentials($call_credentials);
@@ -80,14 +81,12 @@ sub cancel {
 ## @return The deserialized value
 
 sub deserializeResponse {
-	my $self = shift;
+	my $self  = shift;
 	my $value = shift;
 
-    if (!defined($value)) {
-        return undef;
-    }
-
-    return $self->{_deserialize}($value);
+	return undef if (!defined($value));
+	return $value if (!$self->{_deserialize});
+  return $self->{_deserialize}($value);
 }
 
 ## Set the CallCredentials for the underlying Call.

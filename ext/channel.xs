@@ -12,7 +12,7 @@ new(const char *class, const char* target, ... )
 
     // channel, args_hash
     // hash->{credentials} - credentials object (optional)
-grpc_init();
+
     int i;
     HV *hash = newHV();
     if (items>2) {
@@ -31,6 +31,8 @@ grpc_init();
         }
       }
     }
+
+    grpc_init();
 
     grpc_channel_args args;
     perl_grpc_read_args_array(hash, &args);
