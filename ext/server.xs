@@ -27,11 +27,52 @@ new(const char *class, ... )
     RETVAL = ctx;
   OUTPUT: RETVAL
 
-SV *
-requestCall()
+HV *
+requestCall(Grpc::XS::Server self)
   CODE:
-    // TODO
-  OUTPUT:
+    grpc_call_error error_code;
+    grpc_call *call;
+    grpc_call_details details;
+    grpc_metadata_array metadata;
+    grpc_event event;
+
+    grpc_call_details_init(&details);
+    grpc_metadata_array_init(&metadata);
+    error_code =
+        grpc_server_request_call(self->wrapped, &call, &details, &metadata,
+                                 completion_queue, completion_queue, NULL);
+    if (error_code != GRPC_CALL_OK) {
+      warn("request_call failed");
+      goto cleanup;
+    }
+    event = grpc_completion_queue_pluck(completion_queue, NULL,
+                                        gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+    if (!event.success) {
+      warn("Failed to request a call for some reason");
+      goto cleanup;
+    }
+
+    HV* result;
+
+    CallCTX* call_ctx = (CallCTX *)malloc( sizeof(CallCTX) );
+    call_ctx->wrapped = call;
+    hv_store(result,"call",strlen("call"),(SV*)call_ctx,0);
+
+    hv_store(result,"method",strlen("method"),newSVpv(details.method,strlen(details.method)),0);
+    hv_store(result,"host",strlen("host"),newSVpv(details.host,strlen(details.host)),0);
+
+    TimevalCTX* timeval_ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
+    timeval_ctx->wrapped = details.deadline;
+    hv_store(result,"absolute_deadline",strlen("absolute_deadline"),(SV*)timeval_ctx,0);
+
+    hv_store(result,"metadata",strlen("metadata"),
+              newRV_noinc((SV *)grpc_parse_metadata_array(&metadata)),0);
+
+  cleanup:
+    grpc_call_details_destroy(&details);
+    grpc_metadata_array_destroy(&metadata);
+    RETVAL = result;
+  OUTPUT: RETVAL
 
 long
 addHttp2Port(Grpc::XS::Server self, SV* addr)
