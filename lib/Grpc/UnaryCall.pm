@@ -1,8 +1,8 @@
-package Grpc::Stub::UnaryCall;
+package Grpc::UnaryCall;
 use strict;
 use warnings;
 
-use base qw(Grpc::Stub::AbstractCall);
+use base qw(Grpc::AbstractCall);
 
 use Grpc::Constants;
 

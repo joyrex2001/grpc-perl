@@ -4,7 +4,26 @@ new(const char *class, ... )
     ServerCTX* ctx = (ServerCTX *)malloc( sizeof(ServerCTX) );
     ctx->wrapped = NULL;
   CODE:
-    // TODO
+    if ( items > 1 && ( items - 1 ) % 2 ) {
+      croak("Expecting a hash as input to constructor");
+    }
+
+    int i;
+    HV *hash = newHV();
+    if (items>1) {
+      for (i = 1; i < items; i += 2 ) {
+        SV *key = ST(i);
+        SV *value = newSVsv(ST(i+1));
+        hv_store_ent(hash,key,value,0);
+      }
+      grpc_channel_args args;
+      perl_grpc_read_args_array(hash, &args);
+      ctx->wrapped = grpc_server_create(&args, NULL);
+      free(args.args);
+    } else {
+      ctx->wrapped = grpc_server_create(NULL, NULL);
+    }
+
     RETVAL = ctx;
   OUTPUT: RETVAL
 
@@ -35,5 +54,4 @@ start(Grpc::XS::Server self)
 void
 DESTROY(Grpc::XS::Server self)
   CODE:
-    // TODO
     Safefree(self);

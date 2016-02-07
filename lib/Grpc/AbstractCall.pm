@@ -1,4 +1,4 @@
-package Grpc::Stub::AbstractCall;
+package Grpc::AbstractCall;
 use strict;
 use warnings;
 

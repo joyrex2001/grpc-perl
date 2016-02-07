@@ -5,4 +5,4 @@ use Test::More;
 
 plan tests => 1;
 
-use_ok("Grpc::Stub::UnaryCall");
+use_ok("Grpc::UnaryCall");
