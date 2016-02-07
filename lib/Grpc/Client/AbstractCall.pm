@@ -1,4 +1,4 @@
-package Grpc::AbstractCall;
+package Grpc::Client::AbstractCall;
 use strict;
 use warnings;
 

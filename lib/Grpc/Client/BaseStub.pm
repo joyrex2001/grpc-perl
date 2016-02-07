@@ -1,4 +1,4 @@
-package Grpc::BaseStub;
+package Grpc::Client::BaseStub;
 use strict;
 use warnings;
 
@@ -11,10 +11,10 @@ use Grpc::XS::Timeval;
 
 use Grpc::Constants;
 
-use Grpc::UnaryCall;
-use Grpc::ClientStreamingCall;
-use Grpc::ServerStreamingCall;
-use Grpc::BidiStreamingCall;
+use Grpc::Client::UnaryCall;
+use Grpc::Client::ClientStreamingCall;
+use Grpc::Client::ServerStreamingCall;
+use Grpc::Client::BidiStreamingCall;
 
 use constant true  => 1;
 use constant false => 0;

@@ -5,13 +5,13 @@ use Test::More;
 
 plan tests => 16;
 
-use_ok('Grpc::AbstractCall');
-use_ok('Grpc::BaseStub');
-use_ok('Grpc::BidiStreamingCall');
-use_ok('Grpc::ClientStreamingCall');
+use_ok('Grpc::Client::AbstractCall');
+use_ok('Grpc::Client::BaseStub');
+use_ok('Grpc::Client::BidiStreamingCall');
+use_ok('Grpc::Client::ClientStreamingCall');
+use_ok('Grpc::Client::ServerStreamingCall');
+use_ok('Grpc::Client::UnaryCall');
 use_ok('Grpc::Constants');
-use_ok('Grpc::ServerStreamingCall');
-use_ok('Grpc::UnaryCall');
 use_ok('Grpc::XS');
 use_ok('Grpc::XS::Call');
 use_ok('Grpc::XS::CallCredentials');

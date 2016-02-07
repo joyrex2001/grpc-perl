@@ -5,4 +5,4 @@ use Test::More;
 
 plan tests => 1;
 
-use_ok("Grpc::BaseStub");
+use_ok("Grpc::Client::BaseStub");

@@ -5,4 +5,4 @@ use Test::More;
 
 plan tests => 1;
 
-use_ok("Grpc::BidiStreamingCall");
+use_ok("Grpc::Client::BidiStreamingCall");

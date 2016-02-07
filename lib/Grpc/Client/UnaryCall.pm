@@ -1,8 +1,8 @@
-package Grpc::UnaryCall;
+package Grpc::Client::UnaryCall;
 use strict;
 use warnings;
 
-use base qw(Grpc::AbstractCall);
+use base qw(Grpc::Client::AbstractCall);
 
 use Grpc::Constants;
 

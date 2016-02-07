@@ -1,8 +1,8 @@
-package Grpc::ClientStreamingCall;
+package Grpc::Client::ClientStreamingCall;
 use strict;
 use warnings;
 
-use base qw(Grpc::AbstractCall);
+use base qw(Grpc::Client::AbstractCall);
 
 use Grpc::Constants;
 
