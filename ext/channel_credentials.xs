@@ -8,12 +8,12 @@ createDefault()
   OUTPUT: RETVAL
 
 Grpc::XS::ChannelCredentials
-createSsl()
+createSsl(const char *class, ...)
   PREINIT:
     ChannelCredentialsCTX* ctx = (ChannelCredentialsCTX *)malloc( sizeof(ChannelCredentialsCTX) );
   CODE:
-    if ( ( items - 1 ) % 2 ) {
-      croak("Expecting a hash as input to constructor");
+    if ( items % 2 ) {
+      croak("Expecting a hash as input to channel credentials constructor");
     }
 
     // @param string pem_root_certs PEM encoding of the server root certificates
@@ -29,7 +29,7 @@ createSsl()
     pem_key_cert_pair.private_key = pem_key_cert_pair.cert_chain = NULL;
 
     int i;
-    for (i = 1; i < items; i += 2 ) {
+    for (i = 0; i < items; i += 2 ) {
       const char *key = SvPV_nolen(ST(i));
       if (!strcmp( key, "pem_root_certs")) {
         pem_root_certs = SvPV_nolen(ST(i+1));

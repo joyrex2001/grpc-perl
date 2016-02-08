@@ -8,6 +8,8 @@ new(const char *class, ... )
       croak("Expecting a hash as input to constructor");
     }
 
+    grpc_init();
+
     int i;
     HV *hash = newHV();
     if (items>1) {

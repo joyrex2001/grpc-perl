@@ -19,11 +19,12 @@ new(const char *class, const char* target, ... )
       for (i = 2; i < items; i += 2 ) {
         SV *key = ST(i);
         if (!strcmp(SvPV_nolen(key), "credentials")) {
-          if (!sv_isobject(ST(i+1))) {
+          if (!sv_isobject(ST(i+1)) ||
+              !sv_isa(ST(i+1),"Grpc::XS::ChannelCredentials")) {
             croak("credentials is not a credentials object");
           } else {
-            // TODO: check if credentials object!
-            creds = (Grpc__XS__ChannelCredentials)SvPV_nolen(ST(i+1));
+            IV tmp = SvIV((SV*)SvRV(ST(i+1)));
+            creds = INT2PTR(Grpc__XS__ChannelCredentials,tmp);
           }
         } else {
           SV *value = newSVsv(ST(i+1));

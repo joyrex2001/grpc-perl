@@ -10,7 +10,7 @@ createComposite(Grpc::XS::CallCredentials cred1, Grpc::XS::CallCredentials cred2
   OUTPUT: RETVAL
 
 Grpc::XS::CallCredentials
-createFromPlugin(Grpc::XS::CallCredentials self, SV* callback)
+createFromPlugin(SV* callback)
   PREINIT:
     CallCredentialsCTX* ctx = (CallCredentialsCTX *)malloc( sizeof(CallCredentialsCTX) );
     ctx->wrapped = NULL;

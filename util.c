@@ -166,19 +166,19 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
                          void *user_data) {
   SV* callback = (SV*)ptr;
 
-  HV *hash;
-  hv_store(hash,"service_url",strlen("service_url"),
-            newSVpv(context.service_url,strlen(context.service_url)),0);
-  hv_store(hash,"method_name",strlen("method_name"),
-            newSVpv(context.method_name,strlen(context.method_name)),0);
-
   dSP;
   ENTER;
+  HV *hash;
+  hv_store(hash,"service_url",strlen("service_url"),
+                            sv_2mortal(newSVpv(context.service_url,0)),0);
+  hv_store(hash,"method_name",strlen("method_name"),
+                            sv_2mortal(newSVpv(context.method_name,0)),0);
+
   SAVETMPS;
-  PUSHMARK(SP);
+  PUSHMARK(sp);
   XPUSHs(sv_2mortal((SV*)hash));
   PUTBACK;
-  int count = call_sv(callback, G_SCALAR);
+  int count = perl_call_sv(callback, G_SCALAR|G_EVAL);
   SPAGAIN;
 
   if (count!=1) {
