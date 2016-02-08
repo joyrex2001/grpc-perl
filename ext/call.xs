@@ -12,13 +12,13 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     //    * deadline      - timeval object
     //    * host_override - string (optional)
 
-    if ( items > 4 ) {
+    if ( items > 5 ) {
       croak("Too many variables for constructor Grpc::XS::Call");
     }
 
     const char* host_override = NULL;
-    if ( items == 4) {
-      host_override = SvPV_nolen(ST(3));
+    if ( items == 5) {
+      host_override = SvPV_nolen(ST(4));
     }
 
     ctx->wrapped = grpc_channel_create_call(
@@ -71,20 +71,21 @@ startBatch(Grpc::XS::Call self, ...)
     if (items>1) {
       for (i = 1; i < items; i += 2 ) {
         SV *key = ST(i);
-        SV *value = newSVsv(ST(i+1));
+        SV *value = ST(i+1);
 
-        if (!SvOK(key)) {
+        if (!SvIOK(key)) {
           warn("Expected an int for message flags");
           goto cleanup;
         }
 
         switch(SvIV(key)) {
           case GRPC_OP_SEND_INITIAL_METADATA:
+            value = SvRV(value);
             if (SvTYPE(value)!=SVt_PVHV) {
               warn("Expected a hash for GRPC_OP_SEND_INITIAL_METADATA");
               goto cleanup;
             }
-            if (!create_metadata_array(SvSTASH(value), &metadata)) {
+            if (!create_metadata_array((HV*)value, &metadata)) {
               warn("Bad metadata value given");
               goto cleanup;
             }
@@ -94,7 +95,7 @@ startBatch(Grpc::XS::Call self, ...)
                  metadata.metadata;
             break;
           case GRPC_OP_SEND_MESSAGE:
-            // check if value is hash
+            value = SvRV(value);
             if (SvTYPE(value)!=SVt_PVHV) {
               warn("Expected a hash for send message");
               goto cleanup;
@@ -131,7 +132,7 @@ startBatch(Grpc::XS::Call self, ...)
           case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
             break;
           case GRPC_OP_SEND_STATUS_FROM_SERVER:
-            // check if value is hash
+            value = SvRV(value);
             if (SvTYPE(value)!=SVt_PVHV) {
               warn("Expected a hash for send message");
               goto cleanup;
@@ -205,16 +206,19 @@ startBatch(Grpc::XS::Call self, ...)
         ops[op_num].reserved = NULL;
         op_num++;
       }
+      // segfault!!
       error = grpc_call_start_batch(self->wrapped, ops, op_num, self->wrapped,
                                       NULL);
+      fprintf(stderr,"error=%d\n",error);
       if (error != GRPC_CALL_OK) {
         warn("start_batch was called incorrectly");
         goto cleanup;
       }
     }
-
+fprintf(stderr,"plucking\n");
     grpc_completion_queue_pluck(completion_queue, self->wrapped,
                                 gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+fprintf(stderr,"plucked\n");
 
     for (i = 0; i < op_num; i++) {
       switch(ops[i].op) {

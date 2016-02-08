@@ -47,8 +47,6 @@ my $server = new Grpc::XS::Server();
 my $port = $server->addSecureHttp2Port('0.0.0.0:0',$server_credentials);
 $server->start();
 
-print STDERR "\nport = $port\n";
-
 my $host_override = 'foo.test.google.fr';
 my $channel = new Grpc::XS::Channel(
       'localhost:'.$port,
@@ -73,8 +71,6 @@ sub callbackFunc {
 ## testCreateFromPlugin()
 #####################################################
 
-print STDERR "\n\ntestCreateFromPlugin...\n\n";
-
 my $deadline = Grpc::XS::Timeval::infFuture();
 my $status_text = 'xyz';
 my $call = new Grpc::XS::Call($channel,
@@ -82,13 +78,11 @@ my $call = new Grpc::XS::Call($channel,
                               $deadline,
                               $host_override);
 
-print STDERR Dumper($call);
-
 my $event = $call->startBatch(
         Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
         Grpc::Constants::GRPC_OP_SEND_CLOSE_FROM_CLIENT() => 1,
     );
-
+print STDERR "event=".Dumper($event);
 #    $this->assertTrue($event->send_metadata);
 #    $this->assertTrue($event->send_close);
 
