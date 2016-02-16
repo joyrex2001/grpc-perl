@@ -22,7 +22,7 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     }
 
     ctx->wrapped = grpc_channel_create_call(
-              channel->wrapped,NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue,
+              channel->wrapped, NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue,
               method, host_override, deadline->wrapped, NULL);
 
     RETVAL = ctx;
@@ -46,6 +46,7 @@ startBatch(Grpc::XS::Call self, ...)
     char *status_details = NULL;
 
     grpc_op ops[8];
+
     size_t op_num = 0;
 
     grpc_byte_buffer *message;
@@ -201,24 +202,23 @@ startBatch(Grpc::XS::Call self, ...)
             warn("Unrecognized key in batch");
             goto cleanup;
         }
-        ops[op_num].op = (grpc_op_type)index;
+        ops[op_num].op = (grpc_op_type)SvIV(key);
         ops[op_num].flags = 0;
         ops[op_num].reserved = NULL;
         op_num++;
       }
-      // segfault!!
+
       error = grpc_call_start_batch(self->wrapped, ops, op_num, self->wrapped,
                                       NULL);
-      fprintf(stderr,"error=%d\n",error);
+
       if (error != GRPC_CALL_OK) {
         warn("start_batch was called incorrectly");
         goto cleanup;
       }
     }
-fprintf(stderr,"plucking\n");
+
     grpc_completion_queue_pluck(completion_queue, self->wrapped,
                                 gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
-fprintf(stderr,"plucked\n");
 
     for (i = 0; i < op_num; i++) {
       switch(ops[i].op) {

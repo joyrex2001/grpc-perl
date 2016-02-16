@@ -141,7 +141,12 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
     metadata->capacity += 1;
   }
 
-  metadata->metadata = gpr_malloc(metadata->capacity * sizeof(grpc_metadata));
+  if(metadata->capacity > 0) {
+    metadata->metadata = gpr_malloc(metadata->capacity * sizeof(grpc_metadata));
+  } else {
+    metadata->metadata = NULL;
+    return true;
+  }
 
   metadata->count = 0;
   hv_iterinit(hash);
