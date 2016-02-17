@@ -11,8 +11,8 @@ plan tests => 5;
 
 use_ok("Grpc::XS::CallCredentials");
 
-#createComposite
-#createFromPlugin
+use lib ('/vagrant/grpc-perl/blib/lib/');
+use lib ('/vagrant/grpc-perl/blib/arch/');
 
 ## ----------------------------------------------------------------------------
 

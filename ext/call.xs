@@ -68,153 +68,153 @@ startBatch(Grpc::XS::Call self, ...)
     grpc_metadata_array_init(&recv_metadata);
     grpc_metadata_array_init(&recv_trailing_metadata);
 
+    if (items<2) goto cleanup;
+
     int i;
-    if (items>1) {
-      for (i = 1; i < items; i += 2 ) {
-        SV *key = ST(i);
-        SV *value = ST(i+1);
+    for (i = 1; i < items; i += 2 ) {
+      SV *key = ST(i);
+      SV *value = ST(i+1);
 
-        if (!SvIOK(key)) {
-          warn("Expected an int for message flags");
-          goto cleanup;
-        }
-
-        switch(SvIV(key)) {
-          case GRPC_OP_SEND_INITIAL_METADATA:
-            value = SvRV(value);
-            if (SvTYPE(value)!=SVt_PVHV) {
-              warn("Expected a hash for GRPC_OP_SEND_INITIAL_METADATA");
-              goto cleanup;
-            }
-            if (!create_metadata_array((HV*)value, &metadata)) {
-              warn("Bad metadata value given");
-              goto cleanup;
-            }
-            ops[op_num].data.send_initial_metadata.count =
-                 metadata.count;
-            ops[op_num].data.send_initial_metadata.metadata =
-                 metadata.metadata;
-            break;
-          case GRPC_OP_SEND_MESSAGE:
-            value = SvRV(value);
-            if (SvTYPE(value)!=SVt_PVHV) {
-              warn("Expected a hash for send message");
-              goto cleanup;
-            }
-            // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
-            SV **flags;
-            if (hv_exists(SvSTASH(value), "flags", sizeof("flags"))) {
-              flags = hv_fetch(SvSTASH(value), "flags", sizeof("flags"), 0);
-            } else {
-              warn("Missing message flags");
-              goto cleanup;
-            }
-            if (!SvIOK(*flags)) {
-              warn("Expected an int for message flags");
-              goto cleanup;
-            }
-            ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
-            // ops[op_num].data.send_message = hash->{message}; // string
-            SV **message_sv;
-            if (hv_exists(SvSTASH(value), "message", sizeof("message"))) {
-              message_sv = hv_fetch(SvSTASH(value),"message",sizeof("message"),0);
-            } else {
-              warn("Missing send message");
-              goto cleanup;
-            }
-            if (!SvOK(*message_sv)) {
-              warn("Expected an string for send message");
-              goto cleanup;
-            }
-            message_str = SvPV(*message_sv,message_len);
-            ops[op_num].data.send_message =
-                        string_to_byte_buffer(message_str,message_len);
-            break;
-          case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
-            break;
-          case GRPC_OP_SEND_STATUS_FROM_SERVER:
-            value = SvRV(value);
-            if (SvTYPE(value)!=SVt_PVHV) {
-              warn("Expected a hash for send message");
-              goto cleanup;
-            }
-            // hash->{metadata}
-            if (hv_exists(SvSTASH(value), "metadata", sizeof("metadata"))) {
-              SV** inner_value;
-              inner_value = hv_fetch(SvSTASH(value), "metadata", sizeof("metadata"), 0);
-              if (!create_metadata_array(SvSTASH(*inner_value), &trailing_metadata)) {
-                warn("Bad trailing metadata value given");
-                goto cleanup;
-              }
-              ops[op_num].data.send_status_from_server.trailing_metadata =
-                  trailing_metadata.metadata;
-              ops[op_num].data.send_status_from_server.trailing_metadata_count =
-                  trailing_metadata.count;
-            }
-            // hash->{code}
-            if (hv_exists(SvSTASH(value), "code", sizeof("code"))) {
-              SV** inner_value;
-              inner_value = hv_fetch(SvSTASH(value), "code", sizeof("code"), 0);
-              if (!SvIOK(*inner_value)) {
-                warn("Status code must be an integer");
-                goto cleanup;
-              }
-              ops[op_num].data.send_status_from_server.status =
-                                                      SvIV(*inner_value);
-            } else {
-              warn("Integer status code is required");
-              goto cleanup;
-            }
-            // hash->{details}
-            if (hv_exists(SvSTASH(value), "details", sizeof("details"))) {
-              SV** inner_value;
-              inner_value = hv_fetch(SvSTASH(value), "details", sizeof("details"), 0);
-              if (!SvOK(*inner_value)) {
-                warn("Status details must be a string");
-                goto cleanup;
-              }
-              ops[op_num].data.send_status_from_server.status_details =
-                  SvPV_nolen(*inner_value);
-            } else {
-              warn("String status details is required");
-              goto cleanup;
-            }
-            break;
-          case GRPC_OP_RECV_INITIAL_METADATA:
-            ops[op_num].data.recv_initial_metadata = &recv_metadata;
-            break;
-          case GRPC_OP_RECV_MESSAGE:
-            ops[op_num].data.recv_message = &message;
-            break;
-          case GRPC_OP_RECV_STATUS_ON_CLIENT:
-            ops[op_num].data.recv_status_on_client.trailing_metadata =
-                &recv_trailing_metadata;
-            ops[op_num].data.recv_status_on_client.status = &status;
-            ops[op_num].data.recv_status_on_client.status_details =
-                &status_details;
-            ops[op_num].data.recv_status_on_client.status_details_capacity =
-                &status_details_capacity;
-            break;
-          case GRPC_OP_RECV_CLOSE_ON_SERVER:
-            ops[op_num].data.recv_close_on_server.cancelled = &cancelled;
-            break;
-          default:
-            warn("Unrecognized key in batch");
-            goto cleanup;
-        }
-        ops[op_num].op = (grpc_op_type)SvIV(key);
-        ops[op_num].flags = 0;
-        ops[op_num].reserved = NULL;
-        op_num++;
-      }
-
-      error = grpc_call_start_batch(self->wrapped, ops, op_num, self->wrapped,
-                                      NULL);
-
-      if (error != GRPC_CALL_OK) {
-        warn("start_batch was called incorrectly");
+      if (!is_integer(key)) { // SvIOK gives false negative on %batch
+        warn("Expected an int for message flags");
         goto cleanup;
       }
+
+      switch(atoi(SvPV_nolen(key))) {
+        case GRPC_OP_SEND_INITIAL_METADATA:
+          value = SvRV(value);
+          if (SvTYPE(value)!=SVt_PVHV) {
+            warn("Expected a hash for GRPC_OP_SEND_INITIAL_METADATA");
+            goto cleanup;
+          }
+          if (!create_metadata_array((HV*)value, &metadata)) {
+            warn("Bad metadata value given");
+            goto cleanup;
+          }
+          ops[op_num].data.send_initial_metadata.count =
+               metadata.count;
+          ops[op_num].data.send_initial_metadata.metadata =
+               metadata.metadata;
+          break;
+        case GRPC_OP_SEND_MESSAGE:
+          value = SvRV(value);
+          if (SvTYPE(value)!=SVt_PVHV) {
+            warn("Expected a hash for send message");
+            goto cleanup;
+          }
+          // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
+          SV **flags;
+          if (hv_exists(SvSTASH(value), "flags", sizeof("flags"))) {
+            flags = hv_fetch(SvSTASH(value), "flags", sizeof("flags"), 0);
+          } else {
+            warn("Missing message flags");
+            goto cleanup;
+          }
+          if (!SvIOK(*flags)) {
+            warn("Expected an int for message flags");
+            goto cleanup;
+          }
+          ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
+          // ops[op_num].data.send_message = hash->{message}; // string
+          SV **message_sv;
+          if (hv_exists(SvSTASH(value), "message", sizeof("message"))) {
+            message_sv = hv_fetch(SvSTASH(value),"message",sizeof("message"),0);
+          } else {
+            warn("Missing send message");
+            goto cleanup;
+          }
+          if (!SvOK(*message_sv)) {
+            warn("Expected an string for send message");
+            goto cleanup;
+          }
+          message_str = SvPV(*message_sv,message_len);
+          ops[op_num].data.send_message =
+                      string_to_byte_buffer(message_str,message_len);
+          break;
+        case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
+          break;
+        case GRPC_OP_SEND_STATUS_FROM_SERVER:
+          value = SvRV(value);
+          if (SvTYPE(value)!=SVt_PVHV) {
+            warn("Expected a hash for send message");
+            goto cleanup;
+          }
+          // hash->{metadata}
+          if (hv_exists(SvSTASH(value), "metadata", sizeof("metadata"))) {
+            SV** inner_value;
+            inner_value = hv_fetch(SvSTASH(value), "metadata", sizeof("metadata"), 0);
+            if (!create_metadata_array(SvSTASH(*inner_value), &trailing_metadata)) {
+              warn("Bad trailing metadata value given");
+              goto cleanup;
+            }
+            ops[op_num].data.send_status_from_server.trailing_metadata =
+                trailing_metadata.metadata;
+            ops[op_num].data.send_status_from_server.trailing_metadata_count =
+                trailing_metadata.count;
+          }
+          // hash->{code}
+          if (hv_exists(SvSTASH(value), "code", sizeof("code"))) {
+            SV** inner_value;
+            inner_value = hv_fetch(SvSTASH(value), "code", sizeof("code"), 0);
+            if (!SvIOK(*inner_value)) {
+              warn("Status code must be an integer");
+              goto cleanup;
+            }
+            ops[op_num].data.send_status_from_server.status =
+                                                    SvIV(*inner_value);
+          } else {
+            warn("Integer status code is required");
+            goto cleanup;
+          }
+          // hash->{details}
+          if (hv_exists(SvSTASH(value), "details", sizeof("details"))) {
+            SV** inner_value;
+            inner_value = hv_fetch(SvSTASH(value), "details", sizeof("details"), 0);
+            if (!SvOK(*inner_value)) {
+              warn("Status details must be a string");
+              goto cleanup;
+            }
+            ops[op_num].data.send_status_from_server.status_details =
+                SvPV_nolen(*inner_value);
+          } else {
+            warn("String status details is required");
+            goto cleanup;
+          }
+          break;
+        case GRPC_OP_RECV_INITIAL_METADATA:
+          ops[op_num].data.recv_initial_metadata = &recv_metadata;
+          break;
+        case GRPC_OP_RECV_MESSAGE:
+          ops[op_num].data.recv_message = &message;
+          break;
+        case GRPC_OP_RECV_STATUS_ON_CLIENT:
+          ops[op_num].data.recv_status_on_client.trailing_metadata =
+              &recv_trailing_metadata;
+          ops[op_num].data.recv_status_on_client.status = &status;
+          ops[op_num].data.recv_status_on_client.status_details =
+              &status_details;
+          ops[op_num].data.recv_status_on_client.status_details_capacity =
+              &status_details_capacity;
+          break;
+        case GRPC_OP_RECV_CLOSE_ON_SERVER:
+          ops[op_num].data.recv_close_on_server.cancelled = &cancelled;
+          break;
+        default:
+          warn("Unrecognized key in batch");
+          goto cleanup;
+      }
+      ops[op_num].op = (grpc_op_type)SvIV(key);
+      ops[op_num].flags = 0;
+      ops[op_num].reserved = NULL;
+      op_num++;
+    }
+
+    error = grpc_call_start_batch(self->wrapped, ops, op_num, self->wrapped,
+                                    NULL);
+
+    if (error != GRPC_CALL_OK) {
+      warn("start_batch was called incorrectly, error = %d",error);
+      goto cleanup;
     }
 
     grpc_completion_queue_pluck(completion_queue, self->wrapped,

@@ -3,29 +3,27 @@ use strict;
 use Data::Dumper;
 use Test::More;
 
-plan tests => 13;
+plan tests => 15;
+use lib ('/vagrant/grpc-perl/blib/lib/');
+use lib ('/vagrant/grpc-perl/blib/arch/');
+
+#cancel
+#setCredentials
 
 use_ok("Grpc::XS::Call");
 use_ok("Grpc::XS::Channel");
 use_ok("Grpc::XS::Timeval");
+use_ok("Grpc::Constants");
 
 my $channel= new Grpc::XS::Channel("channel");
 my $deadline = Grpc::XS::Timeval::infFuture();
 my $c = new Grpc::XS::Call($channel,"helloWorld",$deadline);
-## test constructor
-
 isa_ok( $c, 'Grpc::XS::Call' );
 can_ok( $c, 'startBatch' );
 can_ok( $c, 'getPeer' );
 can_ok( $c, 'cancel' );
 can_ok( $c, 'setCredentials' );
-
-#startBatch
-#getPeer
-#cancel
-#setCredentials
-
-use_ok("Grpc::Constants");
+undef $c;
 
 my $server = new Grpc::XS::Server();
 my $port = $server->addHttp2Port('0.0.0.0:0');
@@ -35,8 +33,17 @@ my $call = new Grpc::XS::Call($channel,
                               '/foo',
                               Grpc::XS::Timeval::infFuture());
 
+my $result;
+
+#check if hash works as input
+my %batch = (
+  Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
+);
+$result = $call->startBatch(%batch);
+ok($result->{send_metadata},"hash as input for startBatch");
+
 ## testAddEmptyMetadata
-my $result = $call->startBatch(
+$result = $call->startBatch(
   Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {} );
 ok($result->{send_metadata},"testAddEmptyMetadata");
 
@@ -61,11 +68,5 @@ $result = $call->startBatch(
 ok($result->{send_metadata},"testAddSingleAndMultiValueMetadata");
 
 ## testGetPeer
-#    $this->assertTrue(is_string($this->call->getPeer()));
-
-
-#check if hash works as input
-#my %batch = (
-#  Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
-#);
-#my $result = $call->startBatch(%batch);
+my $peer = $call->getPeer();
+ok(defined($result),"testGetPeer");

@@ -54,6 +54,20 @@ void grpc_perl_shutdown_completion_queue() {
   grpc_completion_queue_destroy(completion_queue);
 }
 
+int is_integer(SV* str) {
+  STRLEN len;
+  const char *s;
+  s = SvPV_const(str, len);
+  int i=0;
+  for (i=0;i<len;i++) {
+    if (*s < '0' || *s > '9') {
+      return 0;
+    }
+    s++;
+  }
+  return 1;
+}
+
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
