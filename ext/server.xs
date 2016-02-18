@@ -47,8 +47,10 @@ requestCall(Grpc::XS::Server self)
       warn("request_call failed");
       goto cleanup;
     }
+
     event = grpc_completion_queue_pluck(completion_queue, NULL,
                                         gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+
     if (!event.success) {
       warn("Failed to request a call for some reason");
       goto cleanup;

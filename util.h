@@ -15,7 +15,7 @@ void byte_buffer_to_string(grpc_byte_buffer *buffer, char **out_string,
                            size_t *out_length);
 
 /* The global completion queue for all operations */
-grpc_completion_queue *completion_queue;
+extern grpc_completion_queue *completion_queue;
 
 /* Initializes the completion queue */
 void grpc_perl_init_completion_queue();
