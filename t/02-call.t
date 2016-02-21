@@ -4,8 +4,6 @@ use Data::Dumper;
 use Test::More;
 
 plan tests => 15;
-use lib ('/vagrant/grpc-perl/blib/lib/');
-use lib ('/vagrant/grpc-perl/blib/arch/');
 
 #cancel
 #setCredentials
@@ -25,17 +23,23 @@ can_ok( $c, 'cancel' );
 can_ok( $c, 'setCredentials' );
 undef $c;
 
+sub newCall {
+  my $channel = shift;
+  return new Grpc::XS::Call($channel,
+                            '/foo',
+                            Grpc::XS::Timeval::infFuture());
+}
+
 my $server = new Grpc::XS::Server();
 my $port = $server->addHttp2Port('0.0.0.0:0');
 
 $channel = new Grpc::XS::Channel('localhost:'.$port);
-my $call = new Grpc::XS::Call($channel,
-                              '/foo',
-                              Grpc::XS::Timeval::infFuture());
 
+my $call;
 my $result;
 
 #check if hash works as input
+$call = newCall($channel);
 my %batch = (
   Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
 );
@@ -43,23 +47,27 @@ $result = $call->startBatch(%batch);
 ok($result->{send_metadata},"hash as input for startBatch");
 
 ## testAddEmptyMetadata
+$call = newCall($channel);
 $result = $call->startBatch(
   Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {} );
 ok($result->{send_metadata},"testAddEmptyMetadata");
 
 ## testAddSingleMetadata
+$call = newCall($channel);
 $result = $call->startBatch(
   Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => { 'key' => ['value'] },
 );
 ok($result->{send_metadata},"testAddSingleMetadata");
 
 ## testAddMultiValueMetadata
+$call = newCall($channel);
 $result = $call->startBatch(
   Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => { 'key' => ['value1', 'value2'] },
 );
 ok($result->{send_metadata},"testAddMultiValueMetadata");
 
 ## testAddSingleAndMultiValueMetadata
+$call = newCall($channel);
 $result = $call->startBatch(
   Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {
                                           'key1' => ['value1'],
