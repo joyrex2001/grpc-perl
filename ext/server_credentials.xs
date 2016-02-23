@@ -25,7 +25,7 @@ createSsl(const char *class, ...)
         pem_root_certs = SvPV_nolen(ST(i+1));
       } else if (!strcmp( key, "pem_private_key")) {
         pem_key_cert_pair.private_key = SvPV_nolen(ST(i+1));
-      } else if (!strcmp( key, "perm_cert_chain")) {
+      } else if (!strcmp( key, "pem_cert_chain")) {
         pem_key_cert_pair.cert_chain = SvPV_nolen(ST(i+1));
       }
     }

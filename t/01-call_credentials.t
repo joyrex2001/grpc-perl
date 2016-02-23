@@ -44,7 +44,7 @@ $credentials = Grpc::XS::ChannelCredentials::createComposite(
 my $server_credentials = Grpc::XS::ServerCredentials::createSsl(
       # pem_root_certs  => undef,
         pem_private_key => file_get_contents($path.'/data/server1.key'),
-        perm_cert_chain => file_get_contents($path.'/data/server1.pem'));
+        pem_cert_chain  => file_get_contents($path.'/data/server1.pem'));
 
 my $server = new Grpc::XS::Server();
 my $port = $server->addSecureHttp2Port('0.0.0.0:0',$server_credentials);
@@ -67,7 +67,7 @@ sub callbackFunc {
   print STDERR "\n\n".Dumper($context)."\n";
 ##  $this->assertTrue(is_string($context->service_url));
 ##  $this->assertTrue(is_string($context->method_name));
-  return { 'k1' => ['v1'], 'k2' => ['v2']};
+  return { 'k1' => 'v1', 'k2' => 'v2'};
 }
 
 #####################################################
