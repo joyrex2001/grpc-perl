@@ -18,7 +18,7 @@ createFromPlugin(SV* callback)
     grpc_metadata_credentials_plugin plugin;
     plugin.get_metadata = plugin_get_metadata;
     plugin.destroy = plugin_destroy_state;
-    plugin.state = (void *)callback;
+    plugin.state = (void *)SvRV(callback);
     plugin.type = "";
     ctx->wrapped = grpc_metadata_credentials_create_from_plugin(plugin, NULL);
     RETVAL = ctx;

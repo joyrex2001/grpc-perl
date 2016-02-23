@@ -187,15 +187,16 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
 
   dSP;
   ENTER;
-  HV *hash;
+
+  HV* hash = newHV();
   hv_store(hash,"service_url",strlen("service_url"),
-                            sv_2mortal(newSVpv(context.service_url,0)),0);
+                            newSVpv(context.service_url,0),0);
   hv_store(hash,"method_name",strlen("method_name"),
-                            sv_2mortal(newSVpv(context.method_name,0)),0);
+                            newSVpv(context.method_name,0),0);
 
   SAVETMPS;
   PUSHMARK(sp);
-  XPUSHs(sv_2mortal((SV*)hash));
+  XPUSHs(sv_2mortal(newRV_noinc((SV*)hash)));
   PUTBACK;
   int count = perl_call_sv(callback, G_SCALAR|G_EVAL);
   SPAGAIN;
@@ -206,7 +207,7 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
 
   SV* retval = POPs;
   grpc_metadata_array metadata;
-  if (!create_metadata_array((HV*)retval, &metadata)) {
+  if (!create_metadata_array((HV*)SvRV(retval), &metadata)) {
     croak("invalid metadata");
     grpc_metadata_array_destroy(&metadata);
   }
