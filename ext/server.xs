@@ -9,6 +9,7 @@ new(const char *class, ... )
     }
 
     grpc_init();
+    grpc_perl_init_completion_queue();
 
     int i;
     HV *hash = newHV();
@@ -26,6 +27,8 @@ new(const char *class, ... )
       ctx->wrapped = grpc_server_create(NULL, NULL);
     }
 
+    grpc_server_register_completion_queue(ctx->wrapped,completion_queue,NULL);
+
     RETVAL = ctx;
   OUTPUT: RETVAL
 
@@ -40,11 +43,12 @@ requestCall(Grpc::XS::Server self)
 
     grpc_call_details_init(&details);
     grpc_metadata_array_init(&metadata);
+
     error_code =
         grpc_server_request_call(self->wrapped, &call, &details, &metadata,
                                  completion_queue, completion_queue, NULL);
     if (error_code != GRPC_CALL_OK) {
-      warn("request_call failed");
+      warn("request_call failed, error = %d",error_code);
       goto cleanup;
     }
 
