@@ -33,9 +33,6 @@ new(const char *class, const char* target, ... )
       }
     }
 
-    grpc_init();
-    grpc_perl_init_completion_queue();
-
     grpc_channel_args args;
     perl_grpc_read_args_array(hash, &args);
 

@@ -8,9 +8,6 @@ new(const char *class, ... )
       croak("Expecting a hash as input to constructor");
     }
 
-    grpc_init();
-    grpc_perl_init_completion_queue();
-
     int i;
     HV *hash = newHV();
     if (items>1) {

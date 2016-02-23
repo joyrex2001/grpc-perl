@@ -16,6 +16,10 @@
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
 
+BOOT:
+  grpc_init();
+  grpc_perl_init_completion_queue();
+
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::Call
 INCLUDE: ext/call.xs
 
