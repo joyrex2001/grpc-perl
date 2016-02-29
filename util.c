@@ -54,20 +54,6 @@ void grpc_perl_shutdown_completion_queue() {
   grpc_completion_queue_destroy(completion_queue);
 }
 
-int is_integer(SV* str) {
-  STRLEN len;
-  const char *s;
-  s = SvPV_const(str, len);
-  int i=0;
-  for (i=0;i<len;i++) {
-    if (*s < '0' || *s > '9') {
-      return 0;
-    }
-    s++;
-  }
-  return 1;
-}
-
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
@@ -108,7 +94,7 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
 /* Creates and returns a perl hash object with the data in a
  * grpc_metadata_array. Returns NULL on failure */
 HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
-  HV* hash;
+  HV* hash = newHV();
   grpc_metadata *elements = metadata_array->metadata;
   grpc_metadata *elem;
 
@@ -124,13 +110,14 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
         croak("Metadata hash somehow contains wrong types.");
         return NULL;
       }
-      av_push( (AV*)*inner_value, newSVpv(elem->value, elem->value_length) );
+      av_push( (AV*)SvRV(*inner_value), newSVpv(elem->value, elem->value_length) );
     } else {
       AV* av = newAV();
       av_push( av, newSVpv(elem->value, elem->value_length) );
-      hv_store(hash,elem->key,strlen(elem->key),(SV*)av,0);
+      hv_store(hash,elem->key,strlen(elem->key),newRV_inc((SV*)av),0);
     }
   }
+
   return hash;
 }
 
@@ -168,7 +155,7 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
     if (SvOK(value)) {
       metadata->metadata[metadata->count].key = key;
       metadata->metadata[metadata->count].value =
-            SvPV(value, metadata->metadata[metadata->count].value_length);
+          strdup(SvPV(value,metadata->metadata[metadata->count].value_length));
       metadata->count += 1;
     } else {
       croak("args values must be int or string");

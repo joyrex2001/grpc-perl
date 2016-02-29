@@ -75,7 +75,7 @@ startBatch(Grpc::XS::Call self, ...)
       SV *key = ST(i);
       SV *value = ST(i+1);
 
-      if (!is_integer(key)) { // SvIOK gives false negative on %batch
+      if (!looks_like_number(key)) {
         warn("Expected an int for message flags");
         goto cleanup;
       }

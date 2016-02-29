@@ -44,6 +44,7 @@ requestCall(Grpc::XS::Server self)
     error_code =
         grpc_server_request_call(self->wrapped, &call, &details, &metadata,
                                  completion_queue, completion_queue, NULL);
+
     if (error_code != GRPC_CALL_OK) {
       warn("request_call failed, error = %d",error_code);
       goto cleanup;
@@ -57,21 +58,25 @@ requestCall(Grpc::XS::Server self)
       goto cleanup;
     }
 
-    HV* result;
+    HV* result = newHV();
 
+    // add call object instance to hash
     CallCTX* call_ctx = (CallCTX *)malloc( sizeof(CallCTX) );
     call_ctx->wrapped = call;
-    hv_store(result,"call",strlen("call"),(SV*)call_ctx,0);
+    hv_store(result,"call",strlen("call"),
+        sv_setref_pv(newSV (0), "Grpc::XS::Call", (void*)call_ctx) ,0);
+
+    // add time object instance to hash
+    TimevalCTX* timeval_ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
+    timeval_ctx->wrapped = details.deadline;
+    hv_store(result,"absolute_deadline",strlen("absolute_deadline"),
+        sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx) ,0);
 
     hv_store(result,"method",strlen("method"),newSVpv(details.method,strlen(details.method)),0);
     hv_store(result,"host",strlen("host"),newSVpv(details.host,strlen(details.host)),0);
 
-    TimevalCTX* timeval_ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
-    timeval_ctx->wrapped = details.deadline;
-    hv_store(result,"absolute_deadline",strlen("absolute_deadline"),(SV*)timeval_ctx,0);
-
     hv_store(result,"metadata",strlen("metadata"),
-              newRV_noinc((SV *)grpc_parse_metadata_array(&metadata)),0);
+                newRV((SV*)grpc_parse_metadata_array(&metadata)),0);
 
   cleanup:
     grpc_call_details_destroy(&details);

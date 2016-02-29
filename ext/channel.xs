@@ -20,7 +20,7 @@ new(const char *class, const char* target, ... )
         SV *key = ST(i);
         if (!strcmp(SvPV_nolen(key), "credentials")) {
           if (!sv_isobject(ST(i+1)) ||
-              !sv_isa(ST(i+1),"Grpc::XS::ChannelCredentials")) {
+              !sv_derived_from(ST(i+1),"Grpc::XS::ChannelCredentials")) {
             croak("credentials is not a credentials object");
           } else {
             IV tmp = SvIV((SV*)SvRV(ST(i+1)));

@@ -7,7 +7,7 @@ use File::Basename;
 use File::Spec;
 my $path = File::Basename::dirname( File::Spec->rel2abs(__FILE__) );
 
-plan tests => 5;
+plan tests => 17;
 
 use_ok("Grpc::XS::CallCredentials");
 
@@ -64,9 +64,8 @@ my $channel = new Grpc::XS::Channel(
 
 sub callbackFunc {
   my $context = shift;
-  print STDERR "\n\n".Dumper($context)."\n";
-##  $this->assertTrue(is_string($context->service_url));
-##  $this->assertTrue(is_string($context->method_name));
+  ok($context->{service_url} =~ /google/,"call back func failed service_url");
+  ok($context->{method_name} =~ /dummy/,"call back func failed method_name");
   return { 'k1' => 'v1', 'k2' => 'v2'};
 }
 
@@ -75,7 +74,6 @@ sub callbackFunc {
 #####################################################
 
 my $deadline = Grpc::XS::Timeval::infFuture();
-my $status_text = 'xyz';
 my $call = new Grpc::XS::Call($channel,
                               '/abc/dummy_method',
                               $deadline,
@@ -85,40 +83,52 @@ my $event = $call->startBatch(
         Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
         Grpc::Constants::GRPC_OP_SEND_CLOSE_FROM_CLIENT() => 1,
     );
-print STDERR "event=".Dumper($event);
-#    $this->assertTrue($event->send_metadata);
-#    $this->assertTrue($event->send_close);
+ok($event->{send_metadata},"startBatch failed return send_metadata");
+ok($event->{send_close},"startBatch failed return send_close");
+
+#####################################################
 
 $event = $server->requestCall();
+my $metadata = $event->{metadata};
+ok(ref($event->{metadata})=~/HASH/,"event->metadata is not a hash");
+ok($event->{metadata}->{k1},"event->metadata->k1 does not exist");
+ok($event->{metadata}->{k2},"event->metadata->k2 does not exist");
+ok(ref($event->{metadata}->{k1})=~/ARRAY/,"event->metadata->k1 is not an array");
+ok(ref($event->{metadata}->{k2})=~/ARRAY/,"event->metadata->k2 is not an array");
+ok($event->{metadata}->{k1}->[0] eq 'v1',"event->metadata->k1 has wrong value");
+ok($event->{metadata}->{k2}->[0] eq 'v2',"event->metadata->k1 has wrong value");
+ok($event->{method} eq '/abc/dummy_method',"event->method has wrong value");
 
-#    $this->assertTrue(is_array($event->metadata));
-my $metadata = $event->metadata;
-#    $this->assertTrue(array_key_exists('k1', $metadata));
-#    $this->assertTrue(array_key_exists('k2', $metadata));
-#    $this->assertSame($metadata['k1'], ['v1']);
-#    $this->assertSame($metadata['k2'], ['v2']);
+#####################################################
 
-#    $this->assertSame('/abc/dummy_method', $event->method);
-my $server_call = $event->call;
+print STDERR "event1=".Dumper($event);
 
+my $status_text = 'xyz';
+my $server_call = $event->{call};
 $event = $server_call->startBatch(
     Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
     Grpc::Constants::GRPC_OP_SEND_STATUS_FROM_SERVER() => {
         'metadata' => {},
-        'code' => Grpc::Constants::GRPC_STATUS_OK(),
-        'details' => $status_text,
+        'code'     => Grpc::Constants::GRPC_STATUS_OK(),
+        'details'  => $status_text,
     },
     Grpc::Constants::GRPC_OP_RECV_CLOSE_ON_SERVER() => 1,
 );
+
+print STDERR "event2=".Dumper($event);
 
 #    $this->assertTrue($event->send_metadata);
 #    $this->assertTrue($event->send_status);
 #    $this->assertFalse($event->cancelled);
 
+#####################################################
+
 $event = $call->startBatch(
     Grpc::Constants::GRPC_OP_RECV_INITIAL_METADATA() => 1,
     Grpc::Constants::GRPC_OP_RECV_STATUS_ON_CLIENT() => 1,
 );
+
+print STDERR "event3=".Dumper($event);
 
 #    $this->assertSame([], $event->metadata);
 my $status = $event->status;
