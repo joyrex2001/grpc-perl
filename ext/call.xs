@@ -104,8 +104,8 @@ startBatch(Grpc::XS::Call self, ...)
           }
           // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
           SV **flags;
-          if (hv_exists(SvSTASH(value), "flags", sizeof("flags"))) {
-            flags = hv_fetch(SvSTASH(value), "flags", sizeof("flags"), 0);
+          if (hv_exists((HV*)value, "flags", strlen("flags"))) {
+            flags = hv_fetch((HV*)value, "flags", strlen("flags"), 0);
           } else {
             warn("Missing message flags");
             goto cleanup;
@@ -117,8 +117,8 @@ startBatch(Grpc::XS::Call self, ...)
           ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
           // ops[op_num].data.send_message = hash->{message}; // string
           SV **message_sv;
-          if (hv_exists(SvSTASH(value), "message", sizeof("message"))) {
-            message_sv = hv_fetch(SvSTASH(value),"message",sizeof("message"),0);
+          if (hv_exists((HV*)value, "message", strlen("message"))) {
+            message_sv = hv_fetch((HV*)value,"message",strlen("message"),0);
           } else {
             warn("Missing send message");
             goto cleanup;
@@ -134,16 +134,17 @@ startBatch(Grpc::XS::Call self, ...)
         case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
           break;
         case GRPC_OP_SEND_STATUS_FROM_SERVER:
-          value = SvRV(value);
+          if (SvROK(value)) value = SvRV(value);
           if (SvTYPE(value)!=SVt_PVHV) {
             warn("Expected a hash for send message");
             goto cleanup;
           }
+
           // hash->{metadata}
-          if (hv_exists(SvSTASH(value), "metadata", sizeof("metadata"))) {
+          if (hv_exists((HV*)value, "metadata", strlen("metadata"))) {
             SV** inner_value;
-            inner_value = hv_fetch(SvSTASH(value), "metadata", sizeof("metadata"), 0);
-            if (!create_metadata_array(SvSTASH(*inner_value), &trailing_metadata)) {
+            inner_value = hv_fetch((HV*)value, "metadata", strlen("metadata"), 0);
+            if (!create_metadata_array((HV*)SvRV(*inner_value), &trailing_metadata)) {
               warn("Bad trailing metadata value given");
               goto cleanup;
             }
@@ -153,9 +154,9 @@ startBatch(Grpc::XS::Call self, ...)
                 trailing_metadata.count;
           }
           // hash->{code}
-          if (hv_exists(SvSTASH(value), "code", sizeof("code"))) {
+          if (hv_exists((HV*)value, "code", strlen("code"))) {
             SV** inner_value;
-            inner_value = hv_fetch(SvSTASH(value), "code", sizeof("code"), 0);
+            inner_value = hv_fetch((HV*)value, "code", strlen("code"), 0);
             if (!SvIOK(*inner_value)) {
               warn("Status code must be an integer");
               goto cleanup;
@@ -167,9 +168,9 @@ startBatch(Grpc::XS::Call self, ...)
             goto cleanup;
           }
           // hash->{details}
-          if (hv_exists(SvSTASH(value), "details", sizeof("details"))) {
+          if (hv_exists((HV*)value, "details", strlen("details"))) {
             SV** inner_value;
-            inner_value = hv_fetch(SvSTASH(value), "details", sizeof("details"), 0);
+            inner_value = hv_fetch((HV*)value, "details", strlen("details"), 0);
             if (!SvOK(*inner_value)) {
               warn("Status details must be a string");
               goto cleanup;
@@ -246,16 +247,14 @@ startBatch(Grpc::XS::Call self, ...)
             hv_store(result,"message",strlen("message"),newSVpv(message_str,message_len),0);
           }
           break;
-        case GRPC_OP_RECV_STATUS_ON_CLIENT:
-          if(1){
-            HV *recv_status;
-            hv_store(recv_status,"metadata",strlen("metadata"),
+        case GRPC_OP_RECV_STATUS_ON_CLIENT: ;
+          HV* recv_status = newHV();
+          hv_store(recv_status,"metadata",strlen("metadata"),
               newRV_noinc((SV *)grpc_parse_metadata_array(&recv_trailing_metadata)),0);
-            hv_store(recv_status,"code",strlen("code"),newSViv(status),0);
-            hv_store(recv_status, "details", strlen("details"),
+          hv_store(recv_status,"code",strlen("code"),newSViv(status),0);
+          hv_store(recv_status, "details", strlen("details"),
                         newSVpv(status_details,strlen(status_details)), 0);
-            hv_store(result,"status",strlen("status"),newRV_noinc((SV *)recv_status),0);
-          }
+          hv_store(result,"status",strlen("status"),newRV_noinc((SV *)recv_status),0);
           break;
         case GRPC_OP_RECV_CLOSE_ON_SERVER:
           hv_store(result,"cancelled",strlen("cancelled"),newSViv(cancelled),0);

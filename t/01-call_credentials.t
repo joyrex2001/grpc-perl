@@ -7,12 +7,9 @@ use File::Basename;
 use File::Spec;
 my $path = File::Basename::dirname( File::Spec->rel2abs(__FILE__) );
 
-plan tests => 17;
+plan tests => 28;
 
 use_ok("Grpc::XS::CallCredentials");
-
-use lib ('/vagrant/grpc-perl/blib/lib/');
-use lib ('/vagrant/grpc-perl/blib/arch/');
 
 ## ----------------------------------------------------------------------------
 
@@ -101,7 +98,7 @@ ok($event->{method} eq '/abc/dummy_method',"event->method has wrong value");
 
 #####################################################
 
-print STDERR "event1=".Dumper($event);
+#print STDERR "event=".Dumper($event);
 
 my $status_text = 'xyz';
 my $server_call = $event->{call};
@@ -114,12 +111,11 @@ $event = $server_call->startBatch(
     },
     Grpc::Constants::GRPC_OP_RECV_CLOSE_ON_SERVER() => 1,
 );
+# print STDERR "event=".Dumper($event);
 
-print STDERR "event2=".Dumper($event);
-
-#    $this->assertTrue($event->send_metadata);
-#    $this->assertTrue($event->send_status);
-#    $this->assertFalse($event->cancelled);
+ok($event->{send_metadata},"send_metadata is not true");
+ok($event->{send_status},"send_status is not true");
+ok(!$event->{cancelled},"cancelled is not false");
 
 #####################################################
 
@@ -127,12 +123,15 @@ $event = $call->startBatch(
     Grpc::Constants::GRPC_OP_RECV_INITIAL_METADATA() => 1,
     Grpc::Constants::GRPC_OP_RECV_STATUS_ON_CLIENT() => 1,
 );
+# print STDERR "event=".Dumper($event);
 
-print STDERR "event3=".Dumper($event);
+ok(ref($event->{metadata})=~/HASH/,"event->metadata is not a hash");
+ok(!(keys %{$event->{metadata}}),"event->metadata is not an empty hash");
 
-#    $this->assertSame([], $event->metadata);
-my $status = $event->status;
-#    $this->assertSame([], $status->metadata);
-#    $this->assertSame(Grpc\STATUS_OK, $status->code);
-#    $this->assertSame($status_text, $status->details);
-print STDERR "\n\nDONE!\n\n";
+my $status = $event->{status};
+ok(ref($status->{metadata})=~/HASH/,"status->metadata is not a hash");
+ok(!(keys %{$status->{metadata}}),"status->metadata is not an empty hash");
+ok(exists($status->{code}),"status->code does not exist");
+ok($status->{code} == Grpc::Constants::GRPC_STATUS_OK(),"status->code not STATUS_OK");
+ok(exists($status->{details}),"status->details does not exist");
+ok($status->{details} eq $status_text,"status->details does not contain ".$status_text);
