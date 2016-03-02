@@ -129,6 +129,7 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
     croak("expected hash for args");
   }
 
+  int i;
   char* key;
   I32 keylen;
   SV* value;
@@ -139,7 +140,16 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   metadata->capacity = 0;
   hv_iterinit(hash);
   while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
-    metadata->capacity += 1;
+    if (!SvROK(value)) {
+      warn("expected array ref in metadata value %s, ignoring...",key);
+      continue;
+    }
+    value = SvRV(value);
+    if (SvTYPE(value)!=SVt_PVAV) {
+      warn("expected array ref in metadata value %s, ignoring...",key);
+      continue;
+    }
+    metadata->capacity += av_len((AV*)value)+1;
   }
 
   if(metadata->capacity > 0) {
@@ -152,14 +162,26 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   metadata->count = 0;
   hv_iterinit(hash);
   while((value = hv_iternextsv(hash,&key,&keylen))!=NULL) {
-    if (SvOK(value)) {
-      metadata->metadata[metadata->count].key = key;
-      metadata->metadata[metadata->count].value =
-          strdup(SvPV(value,metadata->metadata[metadata->count].value_length));
-      metadata->count += 1;
-    } else {
-      croak("args values must be int or string");
-      return false;
+    if (!SvROK(value)) {
+      //warn("expected array ref in metadata value %s, ignoring...",key);
+      continue;
+    }
+    value = SvRV(value);
+    if (SvTYPE(value)!=SVt_PVAV) {
+      //warn("expected array ref in metadata value %s, ignoring...",key);
+      continue;
+    }
+    for(i=0;i<av_len((AV*)value)+1;i++) {
+      SV** inner_value = av_fetch((AV*)value,i,1);
+      if (SvOK(*inner_value)) {
+        metadata->metadata[metadata->count].key = key;
+        metadata->metadata[metadata->count].value =
+            strdup(SvPV(*inner_value,metadata->metadata[metadata->count].value_length));
+        metadata->count += 1;
+      } else {
+        croak("args values must be int or string");
+        return false;
+      }
     }
   }
 

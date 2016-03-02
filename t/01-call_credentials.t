@@ -63,7 +63,7 @@ sub callbackFunc {
   my $context = shift;
   ok($context->{service_url} =~ /google/,"call back func failed service_url");
   ok($context->{method_name} =~ /dummy/,"call back func failed method_name");
-  return { 'k1' => 'v1', 'k2' => 'v2'};
+  return { 'k1' => [ 'v1' ], 'k2' => [ 'v2','v3' ] };
 }
 
 #####################################################
