@@ -22,11 +22,14 @@ createSsl(const char *class, ...)
     for (i = 0; i < items; i += 2 ) {
       const char *key = SvPV_nolen(ST(i));
       if (!strcmp( key, "pem_root_certs")) {
-        pem_root_certs = SvPV_nolen(ST(i+1));
+        if (SvOK(ST(i+1)))
+          pem_root_certs = SvPV_nolen(ST(i+1));
       } else if (!strcmp( key, "pem_private_key")) {
-        pem_key_cert_pair.private_key = SvPV_nolen(ST(i+1));
+        if (SvOK(ST(i+1)))
+          pem_key_cert_pair.private_key = SvPV_nolen(ST(i+1));
       } else if (!strcmp( key, "pem_cert_chain")) {
-        pem_key_cert_pair.cert_chain = SvPV_nolen(ST(i+1));
+        if (SvOK(ST(i+1)))
+          pem_key_cert_pair.cert_chain = SvPV_nolen(ST(i+1));
       }
     }
 

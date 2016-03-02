@@ -39,7 +39,7 @@ $credentials = Grpc::XS::ChannelCredentials::createComposite(
         $call_credentials
         );
 my $server_credentials = Grpc::XS::ServerCredentials::createSsl(
-      # pem_root_certs  => undef,
+        pem_root_certs  => undef,
         pem_private_key => file_get_contents($path.'/data/server1.key'),
         pem_cert_chain  => file_get_contents($path.'/data/server1.pem'));
 
