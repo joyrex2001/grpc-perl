@@ -29,7 +29,7 @@ new(const char *class, ... )
     RETVAL = ctx;
   OUTPUT: RETVAL
 
-HV *
+HV*
 requestCall(Grpc::XS::Server self)
   CODE:
     grpc_call_error error_code;
@@ -105,4 +105,11 @@ start(Grpc::XS::Server self)
 void
 DESTROY(Grpc::XS::Server self)
   CODE:
+    if (self->wrapped != NULL) {
+      grpc_server_shutdown_and_notify(self->wrapped, completion_queue, NULL);
+      grpc_server_cancel_all_calls(self->wrapped);
+      grpc_completion_queue_pluck(completion_queue, NULL,
+                                  gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+      grpc_server_destroy(self->wrapped);
+    }
     Safefree(self);
