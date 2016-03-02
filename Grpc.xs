@@ -20,6 +20,12 @@ BOOT:
   grpc_init();
   grpc_perl_init_completion_queue();
 
+void
+destroy()
+  CODE:
+    grpc_perl_shutdown_completion_queue();
+    grpc_shutdown();
+
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::Call
 INCLUDE: ext/call.xs
 
