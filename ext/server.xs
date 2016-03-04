@@ -29,7 +29,7 @@ new(const char *class, ... )
     RETVAL = ctx;
   OUTPUT: RETVAL
 
-HV*
+SV*
 requestCall(Grpc::XS::Server self)
   CODE:
     grpc_call_error error_code;
@@ -63,14 +63,14 @@ requestCall(Grpc::XS::Server self)
     // add call object instance to hash
     CallCTX* call_ctx = (CallCTX *)malloc( sizeof(CallCTX) );
     call_ctx->wrapped = call;
-    hv_store(result,"call",strlen("call"),
-        sv_setref_pv(newSV (0), "Grpc::XS::Call", (void*)call_ctx) ,0);
+    SV* callsv = sv_setref_pv(newSV (0), "Grpc::XS::Call", (void*)call_ctx) ;
+    hv_store(result,"call",strlen("call"), callsv, 0);
 
     // add time object instance to hash
     TimevalCTX* timeval_ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
     timeval_ctx->wrapped = details.deadline;
-    hv_store(result,"absolute_deadline",strlen("absolute_deadline"),
-        sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx) ,0);
+    SV* timevalsv = sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx);
+    hv_store(result,"absolute_deadline",strlen("absolute_deadline"), timevalsv, 0);
 
     hv_store(result,"method",strlen("method"),newSVpv(details.method,strlen(details.method)),0);
     hv_store(result,"host",strlen("host"),newSVpv(details.host,strlen(details.host)),0);
@@ -81,7 +81,7 @@ requestCall(Grpc::XS::Server self)
   cleanup:
     grpc_call_details_destroy(&details);
     grpc_metadata_array_destroy(&metadata);
-    RETVAL = result;
+    RETVAL = (SV*)newRV_noinc((SV *)result);
   OUTPUT: RETVAL
 
 long

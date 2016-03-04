@@ -28,7 +28,7 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     RETVAL = ctx;
   OUTPUT: RETVAL
 
-HV *
+SV*
 startBatch(Grpc::XS::Call self, ...)
   CODE:
     if ( items > 1 && ( items - 1 ) % 2 ) {
@@ -273,7 +273,7 @@ startBatch(Grpc::XS::Call self, ...)
       gpr_free(status_details);
     }
 
-    RETVAL = result;
+    RETVAL = (SV*)newRV_noinc((SV *)result);
   OUTPUT: RETVAL
 
 const char*

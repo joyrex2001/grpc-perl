@@ -2,6 +2,7 @@
 use strict;
 use Data::Dumper;
 use Test::More;
+use Devel::Peek;
 
 plan tests => 15;
 
@@ -34,6 +35,7 @@ my $server = new Grpc::XS::Server();
 my $port = $server->addHttp2Port('0.0.0.0:0');
 
 $channel = new Grpc::XS::Channel('localhost:'.$port);
+# Dump($channel);
 
 my $call;
 my $result;
@@ -45,6 +47,7 @@ my %batch = (
 );
 $result = $call->startBatch(%batch);
 ok($result->{send_metadata},"hash as input for startBatch");
+# Dump($result);
 
 ## testAddEmptyMetadata
 $call = newCall($channel);

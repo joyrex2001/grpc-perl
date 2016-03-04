@@ -205,7 +205,7 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
 
   SAVETMPS;
   PUSHMARK(sp);
-  XPUSHs(sv_2mortal(newRV_noinc((SV*)hash)));
+  XPUSHs(sv_2mortal((SV*)newRV_noinc((SV*)hash)));
   PUTBACK;
   int count = perl_call_sv(callback, G_SCALAR|G_EVAL);
   SPAGAIN;

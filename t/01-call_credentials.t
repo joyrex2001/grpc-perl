@@ -2,6 +2,7 @@
 use strict;
 use Data::Dumper;
 use Test::More;
+use Devel::Peek;
 
 use File::Basename;
 use File::Spec;
@@ -75,6 +76,7 @@ my $call = new Grpc::XS::Call($channel,
                               '/abc/dummy_method',
                               $deadline,
                               $host_override);
+# Dump($call);
 
 my $event = $call->startBatch(
         Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
@@ -98,7 +100,8 @@ ok($event->{method} eq '/abc/dummy_method',"event->method has wrong value");
 
 #####################################################
 
-#print STDERR "event=".Dumper($event);
+# print STDERR "event=".Dumper($event);
+# Dump($event);
 
 my $status_text = 'xyz';
 my $server_call = $event->{call};
@@ -112,6 +115,8 @@ $event = $server_call->startBatch(
     Grpc::Constants::GRPC_OP_RECV_CLOSE_ON_SERVER() => 1,
 );
 # print STDERR "event=".Dumper($event);
+# Dump($server_call);
+# Dump($call);
 
 ok($event->{send_metadata},"send_metadata is not true");
 ok($event->{send_status},"send_status is not true");
