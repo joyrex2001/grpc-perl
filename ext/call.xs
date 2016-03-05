@@ -106,15 +106,12 @@ startBatch(Grpc::XS::Call self, ...)
           SV **flags;
           if (hv_exists((HV*)value, "flags", strlen("flags"))) {
             flags = hv_fetch((HV*)value, "flags", strlen("flags"), 0);
-          } else {
-            warn("Missing message flags");
-            goto cleanup;
+            if (!SvIOK(*flags)) {
+              warn("Expected an int for message flags");
+              goto cleanup;
+            }
+            ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
           }
-          if (!SvIOK(*flags)) {
-            warn("Expected an int for message flags");
-            goto cleanup;
-          }
-          ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
           // ops[op_num].data.send_message = hash->{message}; // string
           SV **message_sv;
           if (hv_exists((HV*)value, "message", strlen("message"))) {
