@@ -57,7 +57,7 @@ void grpc_perl_shutdown_completion_queue() {
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
-    croak("expected hash for args");
+    croak("Expected hash for args");
   }
 
   char* key;
@@ -126,7 +126,7 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
-    croak("expected hash for args");
+    croak("Expected hash for args");
   }
 
   int i;

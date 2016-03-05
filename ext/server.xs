@@ -63,14 +63,14 @@ requestCall(Grpc::XS::Server self)
     // add call object instance to hash
     CallCTX* call_ctx = (CallCTX *)malloc( sizeof(CallCTX) );
     call_ctx->wrapped = call;
-    SV* callsv = sv_setref_pv(newSV (0), "Grpc::XS::Call", (void*)call_ctx) ;
-    hv_store(result,"call",strlen("call"), callsv, 0);
+    SV* call_sv = sv_setref_pv(newSV (0), "Grpc::XS::Call", (void*)call_ctx) ;
+    hv_store(result,"call",strlen("call"), call_sv, 0);
 
     // add time object instance to hash
     TimevalCTX* timeval_ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
     timeval_ctx->wrapped = details.deadline;
-    SV* timevalsv = sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx);
-    hv_store(result,"absolute_deadline",strlen("absolute_deadline"), timevalsv, 0);
+    SV* timeval_sv = sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx);
+    hv_store(result,"absolute_deadline",strlen("absolute_deadline"), timeval_sv, 0);
 
     hv_store(result,"method",strlen("method"),newSVpv(details.method,strlen(details.method)),0);
     hv_store(result,"host",strlen("host"),newSVpv(details.host,strlen(details.host)),0);

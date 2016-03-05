@@ -58,7 +58,12 @@ long
 getConnectivityState(Grpc::XS::Channel self, ... )
   CODE:
     int try_to_connect = 0;
-    if ( items > 1  ) { try_to_connect = SvUV(ST(1)); }
+    if ( items > 1  ) {
+      if (items > 2 || !SvIOK(ST(1))) {
+        croak("Invalid param getConnectivityState");
+      }
+      try_to_connect = SvUV(ST(1));
+    }
     RETVAL = grpc_channel_check_connectivity_state(self->wrapped, try_to_connect);
   OUTPUT: RETVAL
 
@@ -79,7 +84,6 @@ close(Grpc::XS::Channel self)
   CODE:
     if (self->wrapped != NULL) {
       grpc_channel_destroy(self->wrapped);
-      free(self->wrapped);
       self->wrapped = NULL;
     }
 
