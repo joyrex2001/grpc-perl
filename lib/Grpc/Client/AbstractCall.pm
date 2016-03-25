@@ -44,6 +44,7 @@ sub new {
 
 	my $self = {
 		'_call'        => $call,
+		'_channel'     => $channel, ## keep in scope together with call
 		'_deserialize' => $deserialize,
 		'_metadata'    => undef,
 	};
