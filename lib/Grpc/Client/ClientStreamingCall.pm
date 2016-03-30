@@ -29,7 +29,6 @@ sub start {
 
 sub write {
 	my $self  = shift;
-	my %param = @_;
 	my $data    = shift;
 	my $options = shift||{};
 

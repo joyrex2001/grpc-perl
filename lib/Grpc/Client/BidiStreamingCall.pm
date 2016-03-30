@@ -27,7 +27,7 @@ sub start {
 sub read {
 	my $self = shift;
 
-  my %batch = { Grpc::Constants::GRPC_OP_RECV_MESSAGE() => true };
+  my %batch = ( Grpc::Constants::GRPC_OP_RECV_MESSAGE() => true );
 	if (!defined($self->{_metadata})) {
 		$batch{Grpc::Constants::GRPC_OP_RECV_INITIAL_METADATA()} = true;
   }
@@ -49,7 +49,6 @@ sub read {
 
 sub write {
 	my $self  = shift;
-	my %param = @_;
 	my $data    = shift;
 	my $options = shift||{};
 

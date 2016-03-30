@@ -16,9 +16,8 @@ use constant false => 0;
 ## @param array $options  an array of options, possible keys:
 ##                        'flags' => a number
 
-sub start{
+sub start {
 	my $self  = shift;
-	my %param = @_;
 	my $data    = shift;
 	my $metadata= shift || {};
 	my $options = shift;
