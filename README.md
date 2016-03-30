@@ -8,4 +8,4 @@ implementation of the gRPC library.
 
 ##Status
 
-Non functioning/in development.
+Experimental/in development.
