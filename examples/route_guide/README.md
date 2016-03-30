@@ -2,7 +2,11 @@
 
 This is the perl version of the standard 'route_guide' example.
 
+<<<<<<< HEAD
 As the perl implementation does not support a server, it requires a running server implemented in another language, running on port 10000 (e.g. the go route_guide server).
+=======
+As the perl implementation does not support a server, it requires a running server implemented in another language, running on port 10000 (e.g. the go greeter server).
+>>>>>>> d3619d4bfac47f2b1face905b4539a4e928f8c6a
 
 The example requires an updated version of the protoxs-perl compiler to be installed (https://github.com/joyrex2001/protobuf-perlxs).
 
