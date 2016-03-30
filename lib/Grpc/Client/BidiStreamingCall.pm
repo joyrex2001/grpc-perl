@@ -15,9 +15,9 @@ sub start {
 	my $self = shift;
 	my $metadata = shift || {};
 
-	$self->{_call}->startBatch({
-						GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
-	});
+	$self->{_call}->startBatch(
+						Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
+	);
 }
 
 ## Reads the next value from the server.
@@ -27,12 +27,12 @@ sub start {
 sub read {
 	my $self = shift;
 
-  my $batch = { GRPC_OP_RECV_MESSAGE() => true };
+  my %batch = { Grpc::Constants::GRPC_OP_RECV_MESSAGE() => true };
 	if (!defined($self->{_metadata})) {
-		$batch->{GRPC_OP_RECV_INITIAL_METADATA()} = true;
+		$batch{Grpc::Constants::GRPC_OP_RECV_INITIAL_METADATA()} = true;
   }
 
-  my $read_event = $self->{_call}->startBatch($batch);
+  my $read_event = $self->{_call}->startBatch(%batch);
   if (!defined($self->{_metadata})) {
   	$self->{_metadata} = $read_event->{metadata};
   }
@@ -50,25 +50,25 @@ sub read {
 sub write {
 	my $self  = shift;
 	my %param = @_;
-	my $data    = $param{data};
-	my $options = $param{options}||{};
+	my $data    = shift;
+	my $options = shift||{};
 
-	my $message = { 'message' => $data->serialize() }; ## TODO: protobuf?
+	my $message = { 'message' => $data->pack() };
   if (defined($options->{'flags'})) {
     $message->{'flags'} = $options->{'flags'};
   }
-  $self->{_call}->startBatch({
-            GRPC_OP_SEND_MESSAGE() => $message,
-  });
+  $self->{_call}->startBatch(
+            Grpc::Constants::GRPC_OP_SEND_MESSAGE() => $message,
+  );
 }
 
 ## Indicate that no more writes will be sent.
 
 sub writesDone {
 	my $self = shift;
-	$self->{_call}->startBatch({
-            GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
-	});
+	$self->{_call}->startBatch(
+            Grpc::Constants::GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
+	);
 }
 
 ## Wait for the server to send the status, and return it.
@@ -78,9 +78,9 @@ sub writesDone {
 
 sub getStatus {
 	my $self = shift;
-	my $status_event = $self->{_call}->startBatch({
-            GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
-	});
+	my $status_event = $self->{_call}->startBatch(
+            Grpc::Constants::GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
+	);
 
 	return $status_event->{status};
 }

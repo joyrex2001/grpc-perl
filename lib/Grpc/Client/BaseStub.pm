@@ -40,9 +40,11 @@ sub new {
 	}
 	$primary_user_agent = "grpc-perl/".($Grpc::XS::VERSION);
 
-	if (!defined($credentials)) {
+	if (!exists($param{"credentials"})) {
 		die("The 'credentials' key is now required. Please see one of the ".
 			  "Grpc::XS::ChannelCredentials::create methods");
+	} elsif (!defined($param{"credentials"})) {
+		delete $param{"credentials"};
 	}
 
 	my $channel = new Grpc::XS::Channel($hostname,%param);
@@ -111,10 +113,10 @@ sub _checkConnectivityState {
 	my $self = shift;
 	my $new_state = shift;
 
-	if ($new_state == GRPC_CHANNEL_READY()){
+	if ($new_state == Grpc::Constants::GRPC_CHANNEL_READY()){
     	return true;
 	}
-	if ($new_state == GRPC_CHANNEL_FATAL_FAILURE()){
+	if ($new_state == Grpc::Constants::GRPC_CHANNEL_FATAL_FAILURE()){
     	die('Failed to connect to server');
 	}
 
@@ -177,14 +179,14 @@ sub _validate_and_normalize_metadata {
 sub _simpleRequest {
 	my $self  = shift;
 	my %param = @_;
-	my $method = $param{method};
-	my $argument = $param{argument};
+	my $method      = $param{method};
+	my $argument    = $param{argument};
 	my $deserialize = $param{deserialize};
-	my $metadata = $param{metadata} || {};
-	my $options = $param{options} || {};
+	my $metadata    = $param{metadata} || {};
+	my $options     = $param{options} || {};
 
-  my $call = new Grpc::Stub::UnaryCall(
-															$self->{_channel},  ## TODO: XS
+  my $call = new Grpc::Client::UnaryCall(
+															$self->{_channel},
                             	$method,
                           		$deserialize,
                         			$options);
@@ -211,15 +213,15 @@ sub _simpleRequest {
 ## @return ClientStreamingSurfaceActiveCall The active call object
 
 sub _clientStreamRequest {
-	my $self = shift;
+	my $self  = shift;
 	my %param = @_;
-	my $method = $param{method};
+	my $method      = $param{method};
 	my $deserialize = $param{deserialize};
-	my $metadata = $param{metadata} || {};
-	my $options = $param{options} || {};
+	my $metadata    = $param{metadata} || {};
+	my $options     = $param{options} || {};
 
-	my $call = new Grpc::Stub::ClientStreamingCall(
-																			$self->{_channel},  ## TODO: XS
+	my $call = new Grpc::Client::ClientStreamingCall(
+																			$self->{_channel},
                                       $method,
                                       $deserialize,
                                       $options );
@@ -247,14 +249,14 @@ sub _clientStreamRequest {
 sub _serverStreamRequest {
 	my $self  = shift;
 	my %param = @_;
-	my $method = $param{method};
-	my $argument = $param{argument};
+	my $method      = $param{method};
+	my $argument    = $param{argument};
 	my $deserialize = $param{deserialize};
-	my $metadata = $param{metadata} || {};
-	my $options = $param{options} || {};
+	my $metadata    = $param{metadata} || {};
+	my $options     = $param{options} || {};
 
-  my $call = new Grpc::Stub::ServerStreamingCall(
-																			$self->{_channel},  ## TODO: XS
+  my $call = new Grpc::Client::ServerStreamingCall(
+																			$self->{_channel},
                                       $method,
                                       $deserialize,
                                       $options);
@@ -280,13 +282,13 @@ sub _serverStreamRequest {
 sub _bidiRequest {
 	my $self = shift;
 	my %param = @_;
-	my $method = $param{method};
+	my $method      = $param{method};
 	my $deserialize = $param{deserialize};
-	my $metadata = $param{metadata} || {};
-	my $options = $param{options} || {};
+	my $metadata    = $param{metadata} || {};
+	my $options     = $param{options} || {};
 
-	my $call = new Grpc::Stub::BidiStreamingCall(
-																		$self->{_channel},  ## TODO: XS
+	my $call = new Grpc::Client::BidiStreamingCall(
+																		$self->{_channel},
                                   	$method,
                                     $deserialize,
                                     $options );

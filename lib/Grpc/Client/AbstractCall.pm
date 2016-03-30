@@ -20,9 +20,9 @@ sub new {
 	my $channel     = shift;
 	my $method      = shift;
 	my $deserialize = shift;
-	my %options     = @_;
-	my $timeout     = $options{timeout};
-	my $call_credentials_callback = $options{call_credentials_callback};
+	my $options     = shift || {};
+	my $timeout     = $options->{timeout};
+	my $call_credentials_callback = $options->{call_credentials_callback};
 
 	my $deadline;
 	if (defined($timeout) && $timeout =~ /^\d+$/) {

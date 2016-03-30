@@ -16,23 +16,23 @@ use constant false => 0;
 ## @param array $options  an array of options, possible keys:
 ##                        'flags' => a number
 
-sub start{
+sub start {
 	my $self  = shift;
-	my %param = @_;
-	my $data    = $param{data};
-	my $metadata= $param{metadata};
-	my $options = $param{options}||{};
+	my $data    = shift;
+	my $metadata= shift || {};
+	my $options = shift;
 
-	my $message = { 'message' => $data->serialize() };
+	my $message = { 'message' => $data->pack() };
 	if (defined($options->{'flags'})) {
 		$message->{'flags'} = $options->{'flags'};
 	}
-	my $event = $self->{_call}->startBatch({
-            GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
-            GRPC_OP_RECV_INITIAL_METADATA() => true,
-            GRPC_OP_SEND_MESSAGE() => $message,
-          	GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
-					});
+
+	my $event = $self->{_call}->startBatch(
+            Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => $metadata,
+            Grpc::Constants::GRPC_OP_RECV_INITIAL_METADATA() => true,
+            Grpc::Constants::GRPC_OP_SEND_MESSAGE() => $message,
+          	Grpc::Constants::GRPC_OP_SEND_CLOSE_FROM_CLIENT() => true,
+					);
 
    $self->{_metadata} = $event->{metadata};
 }
@@ -44,10 +44,10 @@ sub start{
 sub wait {
 	my $self  = shift;
 
-	my $event = $self->{_call}->startBatch({
-            GRPC_OP_RECV_MESSAGE() => true,
-            GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
-   	});
+	my $event = $self->{_call}->startBatch(
+            Grpc::Constants::GRPC_OP_RECV_MESSAGE() => true,
+            Grpc::Constants::GRPC_OP_RECV_STATUS_ON_CLIENT() => true,
+   	);
 
 	return $self->deserializeResponse($event->{message},$event->{status});
 }
