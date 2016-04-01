@@ -93,7 +93,7 @@ sub waitForReady {
 
   my $now = Grpc::XS::Timeval::now();
  	my $delta = new Grpc::XS::Timeval($timeout);
-  my $deadline = Grpc::XS::Timevall::add($now,$delta);
+  my $deadline = Grpc::XS::Timeval::add($now,$delta);
 
   while ($self->{_channel}->watchConnectivityState($new_state, $deadline)) {
 		## state has changed before deadline
