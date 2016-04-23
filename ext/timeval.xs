@@ -7,7 +7,7 @@ new(const char *class, ... )
   CODE:
     if (items>1) {
       ctx->wrapped =
-          gpr_time_from_micros((long)SvPV_nolen(ST(1)),GPR_TIMESPAN);
+          gpr_time_from_micros(SvIV(ST(1)),GPR_TIMESPAN);
     } else {
       ctx->wrapped = gpr_time_0(GPR_CLOCK_REALTIME);
     }

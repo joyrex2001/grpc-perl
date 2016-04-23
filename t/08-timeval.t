@@ -3,7 +3,7 @@ use strict;
 use Data::Dumper;
 use Test::More;
 
-plan tests => 20;
+plan tests => 23;
 
 use_ok("Grpc::XS::Timeval");
 use_ok("Grpc::Constants");
@@ -60,3 +60,8 @@ $delta = new Grpc::XS::Timeval(1000);
 $deadline = $now->add($delta);
 my $back_to_now = $deadline->substract($delta);
 ok(Grpc::XS::Timeval::compare($back_to_now, $now)==0,"testAddAndSubtract");
+
+my $fixed = new Grpc::XS::Timeval(1000);
+ok( $fixed->getTvSec()==0,"tvsec = 0");
+ok( $fixed->getTvNsec()==1000000,"tvnsec = 1000000");
+ok( $fixed->getClockType()==Grpc::Constants::GPR_TIMESPAN(),"ClockType = GPR_TIMESPAN");

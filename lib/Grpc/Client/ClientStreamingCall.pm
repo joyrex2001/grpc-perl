@@ -32,7 +32,7 @@ sub write {
 	my $data    = shift;
 	my $options = shift||{};
 
-	my $message = { 'message' => $data->pack() };
+	my $message = { 'message' => $data? $data->pack() : "" };
 	if (defined($options->{'flags'})) {
 		$message->{'flags'} = $options->{'flags'};
 	}

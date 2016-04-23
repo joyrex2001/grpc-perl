@@ -186,14 +186,13 @@ sub _simpleRequest {
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
-	my $timeout     = $param{timeout} || $self->{_timeout};
+	$options->{timeout} = $options->{timeout} || $self->{_timeout};
 
   my $call = new Grpc::Client::UnaryCall(
 															$self->{_channel},
                             	$method,
                           		$deserialize,
-                        			$options,
-                        			timeout => $timeout );
+                        			$options );
 	my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
@@ -223,14 +222,13 @@ sub _clientStreamRequest {
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
-	my $timeout     = $param{timeout} || $self->{_timeout};
+	$options->{timeout} = $options->{timeout} || $self->{_timeout};
 
 	my $call = new Grpc::Client::ClientStreamingCall(
 																			$self->{_channel},
                                       $method,
                                       $deserialize,
-                        			        $options,
-                        			        timeout => $timeout );
+                        			        $options );
   my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
@@ -260,14 +258,13 @@ sub _serverStreamRequest {
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
-	my $timeout     = $param{timeout} || $self->{_timeout};
+	$options->{timeout} = $options->{timeout} || $self->{_timeout};
 
   my $call = new Grpc::Client::ServerStreamingCall(
 																			$self->{_channel},
                                       $method,
                                       $deserialize,
-                        			        $options,
-                        			        timeout => $timeout );
+                        			        $options );
 	my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
@@ -294,14 +291,13 @@ sub _bidiRequest {
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
-	my $timeout     = $param{timeout} || $self->{_timeout};
+	$options->{timeout} = $options->{timeout} || $self->{_timeout};
 
 	my $call = new Grpc::Client::BidiStreamingCall(
 																		$self->{_channel},
                                   	$method,
                                     $deserialize,
-                        			      $options,
-                        			      timeout => $timeout );
+                        			      $options );
   my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
 
 	if (defined($self->{_update_metadata})) {
