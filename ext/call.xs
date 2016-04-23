@@ -270,6 +270,14 @@ startBatch(Grpc::XS::Call self, ...)
       gpr_free(status_details);
     }
 
+    for (i = 0; i < op_num; i++) {
+      if (ops[i].op == GRPC_OP_SEND_MESSAGE) {
+        grpc_byte_buffer_destroy(ops[i].data.send_message);
+      }
+      if (ops[i].op == GRPC_OP_RECV_MESSAGE) {
+        grpc_byte_buffer_destroy(message);
+      }
+    }
     RETVAL = (SV*)newRV_noinc((SV *)result);
   OUTPUT: RETVAL
 
