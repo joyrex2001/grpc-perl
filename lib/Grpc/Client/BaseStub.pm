@@ -118,7 +118,7 @@ sub _checkConnectivityState {
 	if ($new_state == Grpc::Constants::GRPC_CHANNEL_READY()){
     	return true;
 	}
-	if ($new_state == Grpc::Constants::GRPC_CHANNEL_FATAL_FAILURE()){
+	if ($new_state == Grpc::Constants::GRPC_CHANNEL_SHUTDOWN()){
     	die('Failed to connect to server');
 	}
 
