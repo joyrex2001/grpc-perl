@@ -91,6 +91,7 @@ startBatch(Grpc::XS::Call self, ...)
             croak("Bad metadata value given");
             goto cleanup;
           }
+          ops[op_num].data.send_initial_metadata.maybe_compression_level.is_set=0;
           ops[op_num].data.send_initial_metadata.count =
                metadata.count;
           ops[op_num].data.send_initial_metadata.metadata =
