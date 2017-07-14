@@ -12,6 +12,8 @@ plan tests => 82;
 
 ## ----------------------------------------------------------------------------
 
+delete @ENV{grep /https?_proxy/i, keys %ENV};
+
 use_ok("Grpc::XS::Server");
 use_ok("Grpc::XS::Channel");
 use_ok("Grpc::XS::Call");

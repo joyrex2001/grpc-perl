@@ -10,6 +10,8 @@ my $path = File::Basename::dirname( File::Spec->rel2abs(__FILE__) );
 
 plan tests => 28;
 
+delete @ENV{grep /https?_proxy/i, keys %ENV};
+
 use_ok("Grpc::XS::CallCredentials");
 
 ## ----------------------------------------------------------------------------
