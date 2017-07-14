@@ -108,20 +108,37 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
   // hash->{key} = [val]
   int i;
   int count = metadata_array->count;
+  SV *inner_value;
+#if defined(GRPC_VERSION_1_2)
+  SV *key;
+  HE *temp_fetch;
+#else
+  SV **temp_fetch;
+#endif
   for (i = 0; i < count; i++) {
     elem = &elements[i];
-    if (hv_exists(hash, elem->key, strlen(elem->key))) {
-      SV** inner_value;
-      inner_value = hv_fetch(hash, elem->key, strlen(elem->key), 0);
-      if(!SvROK(*inner_value)) {
+#if defined(GRPC_VERSION_1_2)
+    key = sv_2mortal(grpc_slice_to_sv(elem->key));
+    temp_fetch = hv_fetch_ent(hash, key, 0, 0);
+    inner_value = temp_fetch ? HeVAL(temp_fetch) : NULL;
+#else
+    temp_fetch = hv_fetch(hash, elem->key, strlen(elem->key), 0);
+    inner_value = temp_fetch ? *temp_fetch : NULL;
+#endif
+    if (inner_value) {
+      if(!SvROK(inner_value)) {
         croak("Metadata hash somehow contains wrong types.");
         return NULL;
       }
-      av_push( (AV*)SvRV(*inner_value), newSVpv(elem->value, elem->value_length) );
+      av_push( (AV*)SvRV(inner_value), grpc_slice_or_buffer_length_to_sv(elem->value) );
     } else {
       AV* av = newAV();
-      av_push( av, newSVpv(elem->value, elem->value_length) );
+      av_push( av, grpc_slice_or_buffer_length_to_sv(elem->value) );
+#if defined(GRPC_VERSION_1_2)
+      hv_store_ent(hash,key,newRV_inc((SV*)av),0);
+#else
       hv_store(hash,elem->key,strlen(elem->key),newRV_inc((SV*)av),0);
+#endif
     }
   }
 
@@ -181,9 +198,15 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
     for(i=0;i<av_len((AV*)value)+1;i++) {
       SV** inner_value = av_fetch((AV*)value,i,1);
       if (SvOK(*inner_value)) {
+#if defined(GRPC_VERSION_1_2)
+        metadata->metadata[metadata->count].key = grpc_slice_from_copied_string(key);
+        metadata->metadata[metadata->count].value =
+            grpc_slice_from_sv(*inner_value);
+#else
         metadata->metadata[metadata->count].key = key;
         metadata->metadata[metadata->count].value =
             strdup(SvPV(*inner_value,metadata->metadata[metadata->count].value_length));
+#endif
         metadata->count += 1;
       } else {
         croak("args values must be int or string");
@@ -243,3 +266,18 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
 void plugin_destroy_state(void *ptr) {
   SV *state = (SV *)ptr;
 }
+
+#if defined(GRPC_VERSION_1_2)
+SV *grpc_slice_to_sv(grpc_slice slice) {
+  char *slice_str = grpc_slice_to_c_string(slice);
+  SV *sv = newSVpv(slice_str, 0);
+  free(slice_str);
+  return sv;
+}
+
+grpc_slice grpc_slice_from_sv(SV *sv) {
+  STRLEN length;
+  const char *buffer = SvPV(sv, length);
+  return grpc_slice_from_copied_buffer(buffer, length);
+}
+#endif
