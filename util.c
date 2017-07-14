@@ -80,9 +80,11 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
     if (SvOK(value)) {
       args->args[args_index].key = key;
       if (SvIOK(value)) {
+        args->args[args_index].type = GRPC_ARG_INTEGER;
         args->args[args_index].value.integer = SvIV(value);
         args->args[args_index].value.string = NULL;
       } else {
+        args->args[args_index].type = GRPC_ARG_STRING;
         args->args[args_index].value.string = SvPV_nolen(value);
       }
     } else {
