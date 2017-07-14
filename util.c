@@ -9,7 +9,11 @@
 
 #include <grpc/grpc.h>
 #include <grpc/byte_buffer_reader.h>
+#if !defined(GRPC_VERSION_1_1)
 #include <grpc/support/slice.h>
+#else
+#include <grpc/slice.h>
+#endif
 #include <grpc/support/alloc.h>
 
 grpc_completion_queue *completion_queue;

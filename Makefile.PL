@@ -36,6 +36,13 @@ check_lib_or_exit(
     function    => 'grpc_version_string();',
 );
 
+check_lib(
+    %CHECKLIB_ARGS,
+    function    => <<'EOT',
+grpc_op op; op.data.send_message.send_message = (grpc_byte_buffer *) NULL;
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_2");
+
 WriteMakefile(
       NAME                  => 'Grpc::XS',
       VERSION_FROM          => 'lib/Grpc/XS.pm',

@@ -126,7 +126,11 @@ startBatch(Grpc::XS::Call self, ...)
             goto cleanup;
           }
           message_str = SvPV(*message_sv,message_len);
+#if !defined(GRPC_VERSION_1_1)
           ops[op_num].data.send_message =
+#else
+          ops[op_num].data.send_message.send_message =
+#endif
                       string_to_byte_buffer(message_str,message_len);
           break;
         case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
@@ -181,10 +185,20 @@ startBatch(Grpc::XS::Call self, ...)
           }
           break;
         case GRPC_OP_RECV_INITIAL_METADATA:
-          ops[op_num].data.recv_initial_metadata = &recv_metadata;
+#if !defined(GRPC_VERSION_1_1)
+          ops[op_num].data.recv_initial_metadata =
+#else
+          ops[op_num].data.recv_initial_metadata.recv_initial_metadata =
+#endif
+              &recv_metadata;
           break;
         case GRPC_OP_RECV_MESSAGE:
-          ops[op_num].data.recv_message = &message;
+#if !defined(GRPC_VERSION_1_1)
+          ops[op_num].data.recv_message =
+#else
+          ops[op_num].data.recv_message.recv_message =
+#endif
+              &message;
           break;
         case GRPC_OP_RECV_STATUS_ON_CLIENT:
           ops[op_num].data.recv_status_on_client.trailing_metadata =
@@ -273,7 +287,11 @@ startBatch(Grpc::XS::Call self, ...)
 
     for (i = 0; i < op_num; i++) {
       if (ops[i].op == GRPC_OP_SEND_MESSAGE) {
+#if !defined(GRPC_VERSION_1_1)
         grpc_byte_buffer_destroy(ops[i].data.send_message);
+#else
+        grpc_byte_buffer_destroy(ops[i].data.send_message.send_message);
+#endif
       }
       if (ops[i].op == GRPC_OP_RECV_MESSAGE) {
         grpc_byte_buffer_destroy(message);
