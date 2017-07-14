@@ -52,6 +52,13 @@ grpc_slice_to_c_string(details.method);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_2");
 
+check_lib(
+    %CHECKLIB_ARGS,
+    function    => <<'EOT',
+void (*call_unref)(grpc_call *call) = &grpc_call_unref;
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_4");
+
 WriteMakefile(
       NAME                  => 'Grpc::XS',
       VERSION_FROM          => 'lib/Grpc/XS.pm',

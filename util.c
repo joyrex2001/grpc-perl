@@ -48,14 +48,30 @@ void byte_buffer_to_string(grpc_byte_buffer *buffer, char **out_string,
 }
 
 void grpc_perl_init_completion_queue() {
+#if defined(GRPC_VERSION_1_4)
+  grpc_completion_queue_attributes attr;
+
+  attr.version = 1;
+  attr.cq_completion_type = GRPC_CQ_PLUCK;
+  attr.cq_polling_type = GRPC_CQ_DEFAULT_POLLING;
+
+  completion_queue = grpc_completion_queue_create(grpc_completion_queue_factory_lookup(&attr), &attr, NULL);
+#else
   completion_queue = grpc_completion_queue_create(NULL);
+#endif
 }
 
 void grpc_perl_shutdown_completion_queue() {
   grpc_completion_queue_shutdown(completion_queue);
+#if defined(GRPC_VERSION_1_4)
+  while (grpc_completion_queue_pluck(completion_queue, NULL,
+                                     gpr_inf_future(GPR_CLOCK_REALTIME),
+                                     NULL).type != GRPC_QUEUE_SHUTDOWN);
+#else
   while (grpc_completion_queue_next(completion_queue,
                                     gpr_inf_future(GPR_CLOCK_REALTIME),
                                     NULL).type != GRPC_QUEUE_SHUTDOWN);
+#endif
   grpc_completion_queue_destroy(completion_queue);
 }
 

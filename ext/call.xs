@@ -363,6 +363,10 @@ void
 DESTROY(Grpc::XS::Call self)
   CODE:
     if (self->wrapped != NULL) {
+#if defined(GRPC_VERSION_1_4)
+      grpc_call_unref(self->wrapped);
+#else
       grpc_call_destroy(self->wrapped);
+#endif
     }
     Safefree(self);
