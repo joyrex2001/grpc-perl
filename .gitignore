@@ -2,3 +2,11 @@
 .project
 .*~
 .*.swp
+/*.o
+/*.obj
+/blib
+/pm_to_blib
+/XS.bs
+/Grpc.c
+/MYMETA.*
+/Makefile*

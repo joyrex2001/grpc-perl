@@ -8,6 +8,9 @@
 
 #include <grpc/grpc.h>
 #include <grpc/grpc_security.h>
+#if defined(GRPC_VERSION_1_1)
+#include <grpc/slice.h>
+#endif
 
 grpc_byte_buffer *string_to_byte_buffer(char *string, size_t length);
 
@@ -32,5 +35,18 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
                          void *user_data);
 
 void plugin_destroy_state(void *ptr);
+
+#if defined(GRPC_VERSION_1_2)
+SV *grpc_slice_to_sv(grpc_slice slice);
+grpc_slice grpc_slice_from_sv(SV *sv);
+#endif
+
+#if defined(GRPC_VERSION_1_2)
+#define grpc_slice_or_string_to_sv(slice) grpc_slice_to_sv((slice))
+#define grpc_slice_or_buffer_length_to_sv(slice) grpc_slice_to_sv((slice))
+#else
+#define grpc_slice_or_string_to_sv(string) newSVpvn((string), strlen(string))
+#define grpc_slice_or_buffer_length_to_sv(buffer) newSVpvn((buffer), (buffer##_length))
+#endif
 
 #endif

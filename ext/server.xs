@@ -72,8 +72,8 @@ requestCall(Grpc::XS::Server self)
     SV* timeval_sv = sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx);
     hv_store(result,"absolute_deadline",strlen("absolute_deadline"), timeval_sv, 0);
 
-    hv_store(result,"method",strlen("method"),newSVpv(details.method,strlen(details.method)),0);
-    hv_store(result,"host",strlen("host"),newSVpv(details.host,strlen(details.host)),0);
+    hv_store(result,"method",strlen("method"),grpc_slice_or_string_to_sv(details.method),0);
+    hv_store(result,"host",strlen("host"),grpc_slice_or_string_to_sv(details.host),0);
 
     hv_store(result,"metadata",strlen("metadata"),
                 newRV((SV*)grpc_parse_metadata_array(&metadata)),0);

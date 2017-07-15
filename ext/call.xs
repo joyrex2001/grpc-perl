@@ -15,7 +15,21 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     if ( items > 5 ) {
       croak("Too many variables for constructor Grpc::XS::Call");
     }
+#if defined(GRPC_VERSION_1_2)
+    grpc_slice host_override;
+    if ( items == 5) {
+      host_override = grpc_slice_from_sv(ST(4));
+    } else {
+      host_override = grpc_empty_slice();
+    }
 
+    grpc_slice method_slice = grpc_slice_from_static_string(method);
+    ctx->wrapped = grpc_channel_create_call(
+              channel->wrapped, NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue,
+              method_slice, &host_override, deadline->wrapped, NULL);
+    grpc_slice_unref(host_override);
+    grpc_slice_unref(method_slice);
+#else
     const char* host_override = NULL;
     if ( items == 5) {
       host_override = SvPV_nolen(ST(4));
@@ -24,6 +38,7 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     ctx->wrapped = grpc_channel_create_call(
               channel->wrapped, NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue,
               method, host_override, deadline->wrapped, NULL);
+#endif
 
     RETVAL = ctx;
   OUTPUT: RETVAL
@@ -42,9 +57,13 @@ startBatch(Grpc::XS::Call self, ...)
     */
 
     HV *result = newHV();
-
+#if defined(GRPC_VERSION_1_2)
+    grpc_slice send_status_details = grpc_empty_slice();
+    grpc_slice recv_status_details = grpc_empty_slice();
+#else
     char *status_details = NULL;
-
+    size_t status_details_capacity = 0;
+#endif
     grpc_op ops[8];
 
     size_t op_num = 0;
@@ -52,7 +71,6 @@ startBatch(Grpc::XS::Call self, ...)
     grpc_byte_buffer *message;
     grpc_status_code status;
     grpc_call_error error;
-    size_t status_details_capacity = 0;
     int cancelled;
 
     char *message_str;
@@ -126,7 +144,11 @@ startBatch(Grpc::XS::Call self, ...)
             goto cleanup;
           }
           message_str = SvPV(*message_sv,message_len);
+#if !defined(GRPC_VERSION_1_1)
           ops[op_num].data.send_message =
+#else
+          ops[op_num].data.send_message.send_message =
+#endif
                       string_to_byte_buffer(message_str,message_len);
           break;
         case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
@@ -173,27 +195,48 @@ startBatch(Grpc::XS::Call self, ...)
               croak("Status details must be a string");
               goto cleanup;
             }
+#if defined(GRPC_VERSION_1_2)
+            send_status_details = grpc_slice_from_sv(*inner_value);
+            ops[op_num].data.send_status_from_server.status_details =
+                &send_status_details;
+#else
             ops[op_num].data.send_status_from_server.status_details =
                 SvPV_nolen(*inner_value);
+#endif
           } else {
             croak("String status details is required");
             goto cleanup;
           }
           break;
         case GRPC_OP_RECV_INITIAL_METADATA:
-          ops[op_num].data.recv_initial_metadata = &recv_metadata;
+#if !defined(GRPC_VERSION_1_1)
+          ops[op_num].data.recv_initial_metadata =
+#else
+          ops[op_num].data.recv_initial_metadata.recv_initial_metadata =
+#endif
+              &recv_metadata;
           break;
         case GRPC_OP_RECV_MESSAGE:
-          ops[op_num].data.recv_message = &message;
+#if !defined(GRPC_VERSION_1_1)
+          ops[op_num].data.recv_message =
+#else
+          ops[op_num].data.recv_message.recv_message =
+#endif
+              &message;
           break;
         case GRPC_OP_RECV_STATUS_ON_CLIENT:
           ops[op_num].data.recv_status_on_client.trailing_metadata =
               &recv_trailing_metadata;
           ops[op_num].data.recv_status_on_client.status = &status;
+#if defined(GRPC_VERSION_1_2)
+          ops[op_num].data.recv_status_on_client.status_details =
+              &recv_status_details;
+#else
           ops[op_num].data.recv_status_on_client.status_details =
               &status_details;
           ops[op_num].data.recv_status_on_client.status_details_capacity =
               &status_details_capacity;
+#endif
           break;
         case GRPC_OP_RECV_CLOSE_ON_SERVER:
           ops[op_num].data.recv_close_on_server.cancelled = &cancelled;
@@ -250,8 +293,13 @@ startBatch(Grpc::XS::Call self, ...)
           hv_store(recv_status,"metadata",strlen("metadata"),
               newRV_noinc((SV *)grpc_parse_metadata_array(&recv_trailing_metadata)),0);
           hv_store(recv_status,"code",strlen("code"),newSViv(status),0);
+#if defined(GRPC_VERSION_1_2)
+          hv_store(recv_status, "details", strlen("details"),
+                        grpc_slice_to_sv(recv_status_details), 0);
+#else
           hv_store(recv_status, "details", strlen("details"),
                         newSVpv(status_details,strlen(status_details)), 0);
+#endif
           hv_store(result,"status",strlen("status"),newRV_noinc((SV *)recv_status),0);
           break;
         case GRPC_OP_RECV_CLOSE_ON_SERVER:
@@ -267,13 +315,22 @@ startBatch(Grpc::XS::Call self, ...)
     grpc_metadata_array_destroy(&trailing_metadata);
     grpc_metadata_array_destroy(&recv_metadata);
     grpc_metadata_array_destroy(&recv_trailing_metadata);
+#if defined(GRPC_VERSION_1_2)
+    grpc_slice_unref(recv_status_details);
+    grpc_slice_unref(send_status_details);
+#else
     if (status_details != NULL) {
       gpr_free(status_details);
     }
+#endif
 
     for (i = 0; i < op_num; i++) {
       if (ops[i].op == GRPC_OP_SEND_MESSAGE) {
+#if !defined(GRPC_VERSION_1_1)
         grpc_byte_buffer_destroy(ops[i].data.send_message);
+#else
+        grpc_byte_buffer_destroy(ops[i].data.send_message.send_message);
+#endif
       }
       if (ops[i].op == GRPC_OP_RECV_MESSAGE) {
         grpc_byte_buffer_destroy(message);
@@ -306,6 +363,10 @@ void
 DESTROY(Grpc::XS::Call self)
   CODE:
     if (self->wrapped != NULL) {
+#if defined(GRPC_VERSION_1_4)
+      grpc_call_unref(self->wrapped);
+#else
       grpc_call_destroy(self->wrapped);
+#endif
     }
     Safefree(self);

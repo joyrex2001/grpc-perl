@@ -9,6 +9,8 @@ plan tests => 15;
 #cancel
 #setCredentials
 
+delete @ENV{grep /https?_proxy/i, keys %ENV};
+
 use_ok("Grpc::XS::Call");
 use_ok("Grpc::XS::Channel");
 use_ok("Grpc::XS::Timeval");
