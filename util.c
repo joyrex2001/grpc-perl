@@ -244,10 +244,8 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
   ENTER;
 
   HV* hash = newHV();
-  hv_store(hash,"service_url",strlen("service_url"),
-                            newSVpv(context.service_url,0),0);
-  hv_store(hash,"method_name",strlen("method_name"),
-                            newSVpv(context.method_name,0),0);
+  hv_stores(hash,"service_url", newSVpv(context.service_url,0));
+  hv_stores(hash,"method_name", newSVpv(context.method_name,0));
 
   SAVETMPS;
   PUSHMARK(sp);

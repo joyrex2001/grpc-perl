@@ -64,19 +64,19 @@ requestCall(Grpc::XS::Server self)
     CallCTX* call_ctx = (CallCTX *)malloc( sizeof(CallCTX) );
     call_ctx->wrapped = call;
     SV* call_sv = sv_setref_pv(newSV (0), "Grpc::XS::Call", (void*)call_ctx) ;
-    hv_store(result,"call",strlen("call"), call_sv, 0);
+    hv_stores(result,"call", call_sv);
 
     // add time object instance to hash
     TimevalCTX* timeval_ctx = (TimevalCTX *)malloc( sizeof(TimevalCTX) );
     timeval_ctx->wrapped = details.deadline;
     SV* timeval_sv = sv_setref_pv(newSV (0), "Grpc::XS::Timeval", (void*)timeval_ctx);
-    hv_store(result,"absolute_deadline",strlen("absolute_deadline"), timeval_sv, 0);
+    hv_stores(result,"absolute_deadline", timeval_sv);
 
-    hv_store(result,"method",strlen("method"),grpc_slice_or_string_to_sv(details.method),0);
-    hv_store(result,"host",strlen("host"),grpc_slice_or_string_to_sv(details.host),0);
+    hv_stores(result,"method",grpc_slice_or_string_to_sv(details.method));
+    hv_stores(result,"host",grpc_slice_or_string_to_sv(details.host));
 
-    hv_store(result,"metadata",strlen("metadata"),
-                newRV((SV*)grpc_parse_metadata_array(&metadata)),0);
+    hv_stores(result,"metadata",
+                newRV((SV*)grpc_parse_metadata_array(&metadata)));
 
   cleanup:
     grpc_call_details_destroy(&details);
