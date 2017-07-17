@@ -162,7 +162,7 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
 }
 
 /* Populates a grpc_metadata_array with the data in a perl hash object.
-   Returns true on success and false on failure */
+   Returns TRUE on success and FALSE on failure */
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
@@ -196,7 +196,7 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
     metadata->metadata = gpr_malloc(metadata->capacity * sizeof(grpc_metadata));
   } else {
     metadata->metadata = NULL;
-    return true;
+    return TRUE;
   }
 
   metadata->count = 0;
@@ -226,12 +226,12 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
         metadata->count += 1;
       } else {
         croak("args values must be int or string");
-        return false;
+        return FALSE;
       }
     }
   }
 
-  return true;
+  return TRUE;
 }
 
 /* Callback function for plugin creds API */
