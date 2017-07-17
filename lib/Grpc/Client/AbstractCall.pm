@@ -11,6 +11,8 @@ use Grpc::XS::Timeval;
 ## @param Channel  $channel     The channel object to communicate on
 ## @param string   $method      The method to call on the
 ##                              remote server
+## @param callback $serialize   A callback function to serialize
+##                              the request
 ## @param callback $deserialize A callback function to deserialize
 ##                              the response
 ## @param array    $options     Call options (optional)
@@ -19,6 +21,7 @@ sub new {
 	my $proto = shift;
 	my $channel     = shift;
 	my $method      = shift;
+	my $serialize   = shift;
 	my $deserialize = shift;
 	my $options     = shift || {};
 	my $timeout     = $options->{timeout};
@@ -45,6 +48,7 @@ sub new {
 	my $self = {
 		'_call'        => $call,
 		'_channel'     => $channel, ## keep in scope together with call
+		'_serialize'   => $serialize,
 		'_deserialize' => $deserialize,
 		'_metadata'    => undef,
 	};
@@ -72,6 +76,21 @@ sub getPeer {
 sub cancel {
 	my $self = shift;
 	return $self->{_call}->cancel();
+}
+
+## Serialize a response value to a string.
+##
+## @param data $value The value to serialize
+##
+## @return The deserialized value
+
+sub serializeRequest {
+	my $self  = shift;
+	my $value = shift;
+
+	return undef if (!defined($value));
+	return $value if (!$self->{_serialize});
+  return $self->{_serialize}($value);
 }
 
 ## Deserialize a response value to an object.
