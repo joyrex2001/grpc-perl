@@ -52,7 +52,7 @@ sub write {
 	my $data    = shift;
 	my $options = shift||{};
 
-	my $message = { 'message' => ($data && $data->can("pack"))? $data->pack() : $data };
+	my $message = { 'message' => $self->serializeRequest($data) };
   if (defined($options->{'flags'})) {
     $message->{'flags'} = $options->{'flags'};
   }

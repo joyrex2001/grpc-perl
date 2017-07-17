@@ -173,6 +173,7 @@ sub _validate_and_normalize_metadata {
 ##
 ## @param string $method The name of the method to call
 ## @param $argument The argument to the method
+## @param callable $serialize   A function that serializes the request
 ## @param callable $deserialize A function that deserializes the response
 ## @param array    $metadata    A metadata map to send to the server
 ##
@@ -183,6 +184,7 @@ sub _simpleRequest {
 	my %param = @_;
 	my $method      = $param{method};
 	my $argument    = $param{argument};
+	my $serialize   = $param{serialize};
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
@@ -191,6 +193,7 @@ sub _simpleRequest {
   my $call = new Grpc::Client::UnaryCall(
 															$self->{_channel},
                             	$method,
+                          		$serialize,
                           		$deserialize,
                         			$options );
 	my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
@@ -210,6 +213,7 @@ sub _simpleRequest {
 ## @param string $method The name of the method to call
 ## @param $arguments An array or Traversable of arguments to stream to the
 ##        server
+## @param callable $serialize   A function that serializes the request
 ## @param callable $deserialize A function that deserializes the response
 ## @param array    $metadata    A metadata map to send to the server
 ##
@@ -219,6 +223,7 @@ sub _clientStreamRequest {
 	my $self  = shift;
 	my %param = @_;
 	my $method      = $param{method};
+	my $serialize   = $param{serialize};
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
@@ -227,6 +232,7 @@ sub _clientStreamRequest {
 	my $call = new Grpc::Client::ClientStreamingCall(
 																			$self->{_channel},
                                       $method,
+                                      $serialize,
                                       $deserialize,
                         			        $options );
   my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
@@ -245,6 +251,7 @@ sub _clientStreamRequest {
 ##
 ## @param string $method The name of the method to call
 ## @param $argument The argument to the method
+## @param callable $serialize   A function that serializes the request
 ## @param callable $deserialize A function that deserializes the responses
 ## @param array    $metadata    A metadata map to send to the server
 ##
@@ -255,6 +262,7 @@ sub _serverStreamRequest {
 	my %param = @_;
 	my $method      = $param{method};
 	my $argument    = $param{argument};
+	my $serialize   = $param{serialize};
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
@@ -263,6 +271,7 @@ sub _serverStreamRequest {
   my $call = new Grpc::Client::ServerStreamingCall(
 																			$self->{_channel},
                                       $method,
+                                      $serialize,
                                       $deserialize,
                         			        $options );
 	my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);
@@ -279,6 +288,7 @@ sub _serverStreamRequest {
 ## Call a remote method with messages streaming in both directions.
 ##
 ## @param string   $method      The name of the method to call
+## @param callable $serialize   A function that serializes the request
 ## @param callable $deserialize A function that deserializes the responses
 ## @param array    $metadata    A metadata map to send to the server
 ##
@@ -288,6 +298,7 @@ sub _bidiRequest {
 	my $self = shift;
 	my %param = @_;
 	my $method      = $param{method};
+	my $serialize   = $param{serialize};
 	my $deserialize = $param{deserialize};
 	my $metadata    = $param{metadata} || {};
 	my $options     = $param{options} || {};
@@ -296,6 +307,7 @@ sub _bidiRequest {
 	my $call = new Grpc::Client::BidiStreamingCall(
 																		$self->{_channel},
                                   	$method,
+                                    $serialize,
                                     $deserialize,
                         			      $options );
   my $jwt_aud_uri = $self->_get_jwt_aud_uri($method);

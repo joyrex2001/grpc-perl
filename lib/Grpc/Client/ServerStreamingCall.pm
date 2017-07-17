@@ -22,7 +22,7 @@ sub start {
 	my $metadata= shift || {};
 	my $options = shift;
 
-	my $message = { 'message' => $data? $data->pack() : "" };
+	my $message = { 'message' => $self->serializeRequest($data) };
 	if (defined($options->{'flags'})) {
 		$message->{'flags'} = $options->{'flags'};
 	}
