@@ -162,7 +162,7 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
 }
 
 /* Populates a grpc_metadata_array with the data in a perl hash object.
-   Returns true on success and false on failure */
+   Returns TRUE on success and FALSE on failure */
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
@@ -196,7 +196,7 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
     metadata->metadata = gpr_malloc(metadata->capacity * sizeof(grpc_metadata));
   } else {
     metadata->metadata = NULL;
-    return true;
+    return TRUE;
   }
 
   metadata->count = 0;
@@ -226,12 +226,12 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
         metadata->count += 1;
       } else {
         croak("args values must be int or string");
-        return false;
+        return FALSE;
       }
     }
   }
 
-  return true;
+  return TRUE;
 }
 
 /* Callback function for plugin creds API */
@@ -244,10 +244,8 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
   ENTER;
 
   HV* hash = newHV();
-  hv_store(hash,"service_url",strlen("service_url"),
-                            newSVpv(context.service_url,0),0);
-  hv_store(hash,"method_name",strlen("method_name"),
-                            newSVpv(context.method_name,0),0);
+  hv_stores(hash,"service_url", newSVpv(context.service_url,0));
+  hv_stores(hash,"method_name", newSVpv(context.method_name,0));
 
   SAVETMPS;
   PUSHMARK(sp);

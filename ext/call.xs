@@ -122,9 +122,8 @@ startBatch(Grpc::XS::Call self, ...)
             goto cleanup;
           }
           // ops[op_num].flags = hash->{flags} & GRPC_WRITE_USED_MASK;// int
-          SV **flags;
-          if (hv_exists((HV*)value, "flags", strlen("flags"))) {
-            flags = hv_fetch((HV*)value, "flags", strlen("flags"), 0);
+          SV **flags = hv_fetchs((HV*)value, "flags", 0);
+          if (flags) {
             if (!looks_like_number(*flags) || !SvIOK(*flags)) {
               croak("Expected an int for message flags");
               goto cleanup;
@@ -132,10 +131,8 @@ startBatch(Grpc::XS::Call self, ...)
             ops[op_num].flags = SvIV(*flags) & GRPC_WRITE_USED_MASK;
           }
           // ops[op_num].data.send_message = hash->{message}; // string
-          SV **message_sv;
-          if (hv_exists((HV*)value, "message", strlen("message"))) {
-            message_sv = hv_fetch((HV*)value,"message",strlen("message"),0);
-          } else {
+          SV **message_sv = hv_fetchs((HV*)value,"message",0);
+          if (!message_sv) {
             croak("Missing send message");
             goto cleanup;
           }
@@ -163,7 +160,7 @@ startBatch(Grpc::XS::Call self, ...)
           // hash->{metadata}
           if (hv_exists((HV*)value, "metadata", strlen("metadata"))) {
             SV** inner_value;
-            inner_value = hv_fetch((HV*)value, "metadata", strlen("metadata"), 0);
+            inner_value = hv_fetchs((HV*)value, "metadata", 0);
             if (!create_metadata_array((HV*)SvRV(*inner_value), &trailing_metadata)) {
               croak("Bad trailing metadata value given");
               goto cleanup;
@@ -176,7 +173,7 @@ startBatch(Grpc::XS::Call self, ...)
           // hash->{code}
           if (hv_exists((HV*)value, "code", strlen("code"))) {
             SV** inner_value;
-            inner_value = hv_fetch((HV*)value, "code", strlen("code"), 0);
+            inner_value = hv_fetchs((HV*)value, "code", 0);
             if (!SvIOK(*inner_value)) {
               croak("Status code must be an integer");
               goto cleanup;
@@ -190,7 +187,7 @@ startBatch(Grpc::XS::Call self, ...)
           // hash->{details}
           if (hv_exists((HV*)value, "details", strlen("details"))) {
             SV** inner_value;
-            inner_value = hv_fetch((HV*)value, "details", strlen("details"), 0);
+            inner_value = hv_fetchs((HV*)value, "details", 0);
             if (!SvOK(*inner_value)) {
               croak("Status details must be a string");
               goto cleanup;
@@ -265,45 +262,45 @@ startBatch(Grpc::XS::Call self, ...)
     for (i = 0; i < op_num; i++) {
       switch(ops[i].op) {
         case GRPC_OP_SEND_INITIAL_METADATA:
-          hv_store(result,"send_metadata",strlen("send_metadata"),newSViv(TRUE),0);
+          hv_stores(result,"send_metadata",newSViv(TRUE));
           break;
         case GRPC_OP_SEND_MESSAGE:
-          hv_store(result,"send_message",strlen("send_message"),newSViv(TRUE),0);
+          hv_stores(result,"send_message",newSViv(TRUE));
           break;
         case GRPC_OP_SEND_CLOSE_FROM_CLIENT:
-          hv_store(result,"send_close",strlen("send_close"),newSViv(TRUE),0);
+          hv_stores(result,"send_close",newSViv(TRUE));
           break;
         case GRPC_OP_SEND_STATUS_FROM_SERVER:
-          hv_store(result,"send_status",strlen("send_status"),newSViv(TRUE),0);
+          hv_stores(result,"send_status",newSViv(TRUE));
           break;
         case GRPC_OP_RECV_INITIAL_METADATA:
-          hv_store(result,"metadata",strlen("metadata"),
-               newRV_noinc((SV *)grpc_parse_metadata_array(&recv_metadata)),0);
+          hv_stores(result,"metadata",
+               newRV_noinc((SV *)grpc_parse_metadata_array(&recv_metadata)));
           break;
         case GRPC_OP_RECV_MESSAGE:
           byte_buffer_to_string(message, &message_str, &message_len);
           if (message_str == NULL) {
-            hv_store(result,"message",strlen("message"),newSV(0),0);//undef
+            hv_stores(result,"message",newSV(0));//undef
           } else {
-            hv_store(result,"message",strlen("message"),newSVpv(message_str,message_len),0);
+            hv_stores(result,"message",newSVpv(message_str,message_len));
           }
           break;
         case GRPC_OP_RECV_STATUS_ON_CLIENT: ;
           HV* recv_status = newHV();
-          hv_store(recv_status,"metadata",strlen("metadata"),
-              newRV_noinc((SV *)grpc_parse_metadata_array(&recv_trailing_metadata)),0);
-          hv_store(recv_status,"code",strlen("code"),newSViv(status),0);
+          hv_stores(recv_status,"metadata",
+              newRV_noinc((SV *)grpc_parse_metadata_array(&recv_trailing_metadata)));
+          hv_stores(recv_status,"code",newSViv(status));
 #if defined(GRPC_VERSION_1_2)
-          hv_store(recv_status, "details", strlen("details"),
-                        grpc_slice_to_sv(recv_status_details), 0);
+          hv_stores(recv_status, "details",
+                        grpc_slice_to_sv(recv_status_details));
 #else
-          hv_store(recv_status, "details", strlen("details"),
-                        newSVpv(status_details,strlen(status_details)), 0);
+          hv_stores(recv_status, "details",
+                        newSVpv(status_details, 0));
 #endif
-          hv_store(result,"status",strlen("status"),newRV_noinc((SV *)recv_status),0);
+          hv_stores(result,"status",newRV_noinc((SV *)recv_status));
           break;
         case GRPC_OP_RECV_CLOSE_ON_SERVER:
-          hv_store(result,"cancelled",strlen("cancelled"),newSViv(cancelled),0);
+          hv_stores(result,"cancelled",newSViv(cancelled));
           break;
         default:
           break;
