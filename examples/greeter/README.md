@@ -1,4 +1,4 @@
-#Greeter example
+# Greeter example
 
 This is the perl version of the standard 'greeter' (Hello World) example.
 
