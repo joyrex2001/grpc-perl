@@ -33,13 +33,14 @@ if ($GRPC_PREFIX) {
 # sanity check
 check_lib_or_exit(
     %CHECKLIB_ARGS,
-    function    => 'grpc_version_string();',
+    function    => 'grpc_version_string();exit(0);',
 );
 
 check_lib(
     %CHECKLIB_ARGS,
     function    => <<'EOT',
 grpc_op op; op.data.send_message.send_message = (grpc_byte_buffer *) NULL;
+exit(0);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_1");
 
@@ -49,6 +50,7 @@ check_lib(
 grpc_call_details details;
 grpc_call_details_init(&details);
 grpc_slice_to_c_string(details.method);
+exit(0);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_2");
 
@@ -56,6 +58,7 @@ check_lib(
     %CHECKLIB_ARGS,
     function    => <<'EOT',
 void (*call_unref)(grpc_call *call) = &grpc_call_unref;
+exit(0);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_4");
 

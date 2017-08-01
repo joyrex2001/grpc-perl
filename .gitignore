@@ -9,4 +9,5 @@
 /XS.bs
 /Grpc.c
 /MYMETA.*
-/Makefile*
+/Makefile
+/Makefile.old
