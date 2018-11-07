@@ -43,7 +43,7 @@ sub write {
 
 ## Wait for the server to respond with data and a status.
 ##
-## @return [response data, status]
+## @return (response data, status)
 
 sub wait {
 	my $self  = shift;
@@ -59,7 +59,9 @@ sub wait {
 		$self->{_metadata} = $event->{metadata};
   }
 
-	return $self->deserializeResponse($event->{message},$event->{status});
+    return wantarray
+    ? ($self->deserializeResponse($event->{message}), $event->{status})
+    : $self->deserializeResponse($event->{message});
 }
 
 1;
