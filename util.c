@@ -279,6 +279,7 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
 /* Cleanup function for plugin creds API */
 void plugin_destroy_state(void *ptr) {
   SV *state = (SV *)ptr;
+  SvREFCNT_dec(state);
 }
 
 #if defined(GRPC_VERSION_1_2)
