@@ -62,6 +62,15 @@ exit(0);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_4");
 
+check_lib(
+    %CHECKLIB_ARGS,
+    function    => <<'EOT',
+return 0;
+grpc_op op;
+op.data.recv_status_on_client.error_string = 0;
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_RECV_STATUS_ON_CLIENT_HAS_ERROR_STRING");
+
 WriteMakefile(
       NAME                  => 'Grpc::XS',
       VERSION_FROM          => 'lib/Grpc/XS.pm',
