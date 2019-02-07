@@ -8,7 +8,7 @@ createDefault()
   OUTPUT: RETVAL
 
 Grpc::XS::ChannelCredentials
-createSsl(const char *class, ...)
+createSsl(...)
   PREINIT:
     ChannelCredentialsCTX* ctx = (ChannelCredentialsCTX *)malloc( sizeof(ChannelCredentialsCTX) );
   CODE:
