@@ -21,6 +21,7 @@ createFromPlugin(SV* callback)
     plugin.state = (void *)SvRV(callback);
     plugin.type = "";
     ctx->wrapped = grpc_metadata_credentials_create_from_plugin(plugin, NULL);
+    SvREFCNT_inc(callback);
     RETVAL = ctx;
   OUTPUT: RETVAL
 

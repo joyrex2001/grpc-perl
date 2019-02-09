@@ -8,7 +8,7 @@ createDefault()
   OUTPUT: RETVAL
 
 Grpc::XS::ChannelCredentials
-createSsl(const char *class, ...)
+createSsl(...)
   PREINIT:
     ChannelCredentialsCTX* ctx = (ChannelCredentialsCTX *)malloc( sizeof(ChannelCredentialsCTX) );
   CODE:
@@ -45,7 +45,11 @@ createSsl(const char *class, ...)
 
     ctx->wrapped = grpc_ssl_credentials_create(
         pem_root_certs,
-        pem_key_cert_pair.private_key == NULL ? NULL : &pem_key_cert_pair, NULL);
+        pem_key_cert_pair.private_key == NULL ? NULL : &pem_key_cert_pair, NULL
+#ifdef GRPC_SSL_CREDENTIALS_HAS_4_ARGS
+        , NULL
+#endif
+    );
 
     RETVAL = ctx;
   OUTPUT: RETVAL

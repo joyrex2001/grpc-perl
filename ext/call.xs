@@ -17,17 +17,21 @@ new(const char *class,  Grpc::XS::Channel channel,  \
     }
 #if defined(GRPC_VERSION_1_2)
     grpc_slice host_override;
+    grpc_slice* host_override_ptr = NULL;
+
     if ( items == 5) {
       host_override = grpc_slice_from_sv(ST(4));
-    } else {
-      host_override = grpc_empty_slice();
+      host_override_ptr = &host_override;
     }
 
     grpc_slice method_slice = grpc_slice_from_static_string(method);
     ctx->wrapped = grpc_channel_create_call(
               channel->wrapped, NULL, GRPC_PROPAGATE_DEFAULTS, completion_queue,
-              method_slice, &host_override, deadline->wrapped, NULL);
-    grpc_slice_unref(host_override);
+              method_slice, host_override_ptr, deadline->wrapped, NULL);
+
+    if (host_override_ptr) {
+        grpc_slice_unref(host_override);
+    }
     grpc_slice_unref(method_slice);
 #else
     const char* host_override = NULL;
