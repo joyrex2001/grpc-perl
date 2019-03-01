@@ -39,10 +39,10 @@ grpc-perl is licensed under the Apache License 2.0.
 
 L<Google::ProtocolBuffers::Dynamic>
 L<https://github.com/joyrex2001/grpc-perl>
- 
+
 =cut
 
-our $VERSION = '0.10';
+our $VERSION = '0.20';
 
 XSLoader::load(__PACKAGE__, $VERSION );
 
