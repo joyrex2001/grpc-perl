@@ -14,11 +14,9 @@ Grpc::XS - binding to the grpc library.
 This is the low-level binding to the L<grpc|https://grpc.io> library.
 This implementation only supports a grpc client.
 
-To use it, there are currently two options:
-
-* L<Google::ProtocolBuffers::Dynamic> to generate the client
-
-* L<protoxs-perl|https://github.com/joyrex2001/protobuf-perlxs> to generate the client based on a proto2 file (see examples)
+This library is not intended to be used directly, but rather
+in combination with a protocol buffer implementation like the
+L<Google::ProtocolBuffers::Dynamic> module.
 
 =cut
 
@@ -30,7 +28,7 @@ Vincent van Dam <joyrex2001@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2017 by Vincent van Dam.
+This software is copyright (c) 2017-2019 by Vincent van Dam.
 grpc-perl is licensed under the Apache License 2.0.
 
 =cut
@@ -38,11 +36,10 @@ grpc-perl is licensed under the Apache License 2.0.
 =head1 SEE ALSO
 
 L<Google::ProtocolBuffers::Dynamic>
-L<https://github.com/joyrex2001/grpc-perl>
 
 =cut
 
-our $VERSION = '0.20';
+our $VERSION = '0.30';
 
 XSLoader::load(__PACKAGE__, $VERSION );
 
