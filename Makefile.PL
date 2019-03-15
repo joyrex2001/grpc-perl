@@ -64,6 +64,14 @@ EOT
 
 check_lib(
     %CHECKLIB_ARGS,
+    header      => 'grpc/grpc_security.h',
+    function    => <<'EOT',
+return !GRPC_METADATA_CREDENTIALS_PLUGIN_SYNC_MAX;
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_VERSION_1_7");
+
+check_lib(
+    %CHECKLIB_ARGS,
     function    => <<'EOT',
 return 0;
 grpc_op op;

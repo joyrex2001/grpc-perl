@@ -30,9 +30,18 @@ void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args);
 HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array);
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata);
 
+#if defined(GRPC_VERSION_1_7)
+int plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
+                        grpc_credentials_plugin_metadata_cb cb,
+                        void *user_data,
+                        grpc_metadata creds_md[GRPC_METADATA_CREDENTIALS_PLUGIN_SYNC_MAX],
+                        size_t *num_creds_md, grpc_status_code *status,
+                        const char **error_details);
+#else
 void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
                          grpc_credentials_plugin_metadata_cb cb,
                          void *user_data);
+#endif
 
 void plugin_destroy_state(void *ptr);
 

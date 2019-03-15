@@ -235,9 +235,18 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
 }
 
 /* Callback function for plugin creds API */
+#if defined(GRPC_VERSION_1_7)
+int plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
+                        grpc_credentials_plugin_metadata_cb cb,
+                        void *user_data,
+                        grpc_metadata creds_md[GRPC_METADATA_CREDENTIALS_PLUGIN_SYNC_MAX],
+                        size_t *num_creds_md, grpc_status_code *status,
+                        const char **error_details) {
+#else
 void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
                          grpc_credentials_plugin_metadata_cb cb,
                          void *user_data) {
+#endif
   SV* callback = (SV*)ptr;
 
   dSP;
@@ -274,6 +283,9 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
 
   /* Pass control back to core */
   cb(user_data, metadata.metadata, metadata.count, code, NULL);
+#if defined(GRPC_VERSION_1_7)
+  return 0;
+#endif
 }
 
 /* Cleanup function for plugin creds API */
