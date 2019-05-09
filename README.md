@@ -15,7 +15,7 @@ implementation that support service rpc definitions. Currently the excellent
 [Google::ProtocolBuffers::Dynamic](http://search.cpan.org/dist/Google-ProtocolBuffers-Dynamic/)
 module is the best option for this.
 
-## `fork()` compatibility
+#### `fork()` compatibility
 
 It's possible to fork processes which use `Grpc::XS`, but only if this
 library is used exclusively inside child processes. This requires an
@@ -30,3 +30,8 @@ if (fork() == 0) { # in child
 	# Grpc::XS can be used in this child without any problems
 }
 ```
+
+## See also
+
+* https://metacpan.org/pod/Grpc::XS
+* https://hub.docker.com/r/joyrex2001/grpc-perl
