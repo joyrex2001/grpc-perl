@@ -16,6 +16,7 @@
 #endif
 #include <grpc/support/alloc.h>
 
+bool module_initialized = false;
 grpc_completion_queue *completion_queue;
 
 grpc_byte_buffer *string_to_byte_buffer(char *string, size_t length) {
@@ -47,6 +48,24 @@ void byte_buffer_to_string(grpc_byte_buffer *buffer, char **out_string,
   *out_length = length;
 }
 
+void grpc_perl_init() {
+  if (module_initialized) {
+    return;
+  }
+  module_initialized = true;
+  grpc_init();
+  grpc_perl_init_completion_queue();
+}
+
+void grpc_perl_destroy() {
+  if (!module_initialized) {
+    return;
+  }
+  grpc_perl_shutdown_completion_queue();
+  grpc_shutdown();
+  module_initialized = false;
+}
+
 void grpc_perl_init_completion_queue() {
 #if defined(GRPC_VERSION_1_4)
   grpc_completion_queue_attributes attr;
@@ -73,6 +92,7 @@ void grpc_perl_shutdown_completion_queue() {
                                     NULL).type != GRPC_QUEUE_SHUTDOWN);
 #endif
   grpc_completion_queue_destroy(completion_queue);
+  completion_queue = NULL;
 }
 
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {

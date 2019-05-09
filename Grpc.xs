@@ -17,14 +17,17 @@
 MODULE = Grpc::XS    PACKAGE = Grpc::XS
 
 BOOT:
-  grpc_init();
-  grpc_perl_init_completion_queue();
+  grpc_perl_init();
+
+void
+init()
+  CODE:
+    grpc_perl_init();
 
 void
 destroy()
   CODE:
-    grpc_perl_shutdown_completion_queue();
-    grpc_shutdown();
+    grpc_perl_destroy();
 
 MODULE = Grpc::XS    PACKAGE = Grpc::XS::Call
 INCLUDE: ext/call.xs
