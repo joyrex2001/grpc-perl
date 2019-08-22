@@ -1,6 +1,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#define NEED_my_strlcpy
 #include "ppport.h"
 
 #include "util.h"
@@ -98,7 +99,7 @@ void grpc_perl_shutdown_completion_queue() {
 void perl_grpc_read_args_array(HV *hash, grpc_channel_args *args) {
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
-    croak("Expected hash for args");
+    croak("Expected hash for perl_grpc_read_args_array() args");
   }
 
   char* key;
@@ -182,19 +183,25 @@ HV* grpc_parse_metadata_array(grpc_metadata_array *metadata_array) {
 }
 
 /* Populates a grpc_metadata_array with the data in a perl hash object.
-   Returns TRUE on success and FALSE on failure */
+   Returns TRUE on success and FALSE on failure.
+   Shouldn't use croak, as it is used in grpc callbacks, and everything explosed with a segfault.
+ */
 bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
+  // First thing to do is to make grpc_metadata_array_destroy() safe no matter what
+  grpc_metadata_array_init(metadata);
+  metadata->capacity = 0;
+  metadata->metadata = NULL;
+
   // handle hashes
   if (SvTYPE(hash)!=SVt_PVHV) {
-    croak("Expected hash for args");
+    warn("Expected hash for create_metadata_array() args");
+    return FALSE;
   }
 
   int i;
   char* key;
   I32 keylen;
   SV* value;
-
-  grpc_metadata_array_init(metadata);
 
   // count items in hash
   metadata->capacity = 0;
@@ -245,7 +252,7 @@ bool create_metadata_array(HV *hash, grpc_metadata_array *metadata) {
 #endif
         metadata->count += 1;
       } else {
-        croak("args values must be int or string");
+        warn("args values must be int or string");
         return FALSE;
       }
     }
@@ -267,7 +274,13 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
                          grpc_credentials_plugin_metadata_cb cb,
                          void *user_data) {
 #endif
+  static char error_details_buf[1024];
+
   SV* callback = (SV*)ptr;
+  SV* err_tmp;
+  int has_error = FALSE;
+  char *error_details_out = NULL;
+  grpc_metadata_array metadata;
 
   dSP;
   ENTER;
@@ -283,26 +296,48 @@ void plugin_get_metadata(void *ptr, grpc_auth_metadata_context context,
   int count = perl_call_sv(callback, G_SCALAR|G_EVAL);
   SPAGAIN;
 
-  if (count!=1) {
-    croak("callback returned more than 1 value");
-  }
+  err_tmp = ERRSV;
+  if (SvTRUE(err_tmp)) {
+    has_error = TRUE;
+    my_strlcpy(error_details_buf, SvPV_nolen(err_tmp), sizeof(error_details_buf));
+    error_details_out = error_details_buf;
+    POPs;
+  } else if (count!=1) {
+    has_error = TRUE;
+    error_details_out = "callback returned more/less than 1 value";
+    POPs;
+  } else {
+    SV* retval = POPs;
 
-  SV* retval = POPs;
-  grpc_metadata_array metadata;
-  if (!create_metadata_array((HV*)SvRV(retval), &metadata)) {
-    croak("invalid metadata");
-    grpc_metadata_array_destroy(&metadata);
+    if (SvROK(retval)) { // create_metadata_array() segfaults without this check
+      if (!create_metadata_array((HV*)SvRV(retval), &metadata)) {
+        has_error = TRUE;
+        error_details_out = "callback returned invalid metadata";
+        grpc_metadata_array_destroy(&metadata);
+      }
+    } else {
+      has_error = TRUE;
+      error_details_out = "calback returned non-reference";
+    }
   }
 
   PUTBACK;
   FREETMPS;
   LEAVE;
 
-  /* TODO: handle error */
-  grpc_status_code code = GRPC_STATUS_OK;
+  // TODO Documentation says that for GRPC_VERSION_1_7-style API a
+  // callback MUST be called from a different thread. This doesn't
+  // crash right now, but definitely should be fixed.
+  // GRPC_METADATA_CREDENTIALS_PLUGIN_SYNC_MAX is 4, so we can return
+  // up to that amount of metadata items synchronously.
+  if ( has_error ) {
+    grpc_status_code code = GRPC_STATUS_INVALID_ARGUMENT;
+    cb(user_data, NULL, 0, code, error_details_out);
+  } else {
+    grpc_status_code code = GRPC_STATUS_OK;
+    cb(user_data, metadata.metadata, metadata.count, code, NULL);
+  }
 
-  /* Pass control back to core */
-  cb(user_data, metadata.metadata, metadata.count, code, NULL);
 #if defined(GRPC_VERSION_1_7)
   return 0;
 #endif

@@ -8,7 +8,7 @@ use File::Basename;
 use File::Spec;
 my $path = File::Basename::dirname( File::Spec->rel2abs(__FILE__) );
 
-plan tests => 45;
+plan tests => 46;
 
 use_ok("Grpc::XS::CallCredentials");
 
@@ -220,3 +220,66 @@ ok(exists($status->{code}),"status->code does not exist");
 ok($status->{code} == Grpc::Constants::GRPC_STATUS_OK(),"status->code not STATUS_OK");
 ok(exists($status->{details}),"status->details does not exist");
 ok($status->{details} eq $status_text,"status->details does not contain ".$status_text);
+
+# I was not able to trigger a plugin calls without ssl/composite credentials, so let's test it there
+subtest "plugin credentials error handling" => sub {
+    my $always_die = sub {
+        die "HERE";
+    };
+
+    my $not_a_reference = sub {
+        return "string";
+    };
+
+    my $not_a_hashref = sub {
+        return [5, 7, 9];
+    };
+
+    my $nothing = sub {
+        return;
+    };
+
+    my @tests = (
+        [$always_die, "always_die", qr/HERE/],
+        [$not_a_reference, "not_a_reference", qr/calback returned non-reference/],
+        [$not_a_hashref, 'not_a_hashref', qr/callback returned invalid metadata/],
+        [$nothing, 'nothing', qr/calback returned non-reference/],
+    );
+
+    for my $test (@tests) {
+        my ($plugin, $name, $expect_like) = @$test;
+
+        subtest $name => sub {
+            my $call_creds = Grpc::XS::CallCredentials::createFromPlugin($plugin);
+
+            my $credentials = Grpc::XS::ChannelCredentials::createComposite($credentials, $call_creds);
+            my $channel = new Grpc::XS::Channel(
+                'localhost:'.$port,
+                'grpc.ssl_target_name_override' => $host_override,
+                'grpc.default_authority' => $host_override,
+                'credentials' => $credentials,
+            );
+
+            my $call = new Grpc::XS::Call(
+                $channel,
+                '/dummy_method',
+                $deadline,
+                $host_override
+            );
+
+            my $event = $call->startBatch(
+                Grpc::Constants::GRPC_OP_SEND_INITIAL_METADATA() => {},
+                Grpc::Constants::GRPC_OP_SEND_CLOSE_FROM_CLIENT() => 1,
+                Grpc::Constants::GRPC_OP_RECV_STATUS_ON_CLIENT() => 1,
+            );
+
+            my $details = $event->{status}{details};
+            if ($details =~ $expect_like) {
+                ok 1, "Status looks good"
+            } else {
+                # bail out immediately, or we can become stuck on the next iteration
+                die "'$details' doesn't look like $expect_like";
+            }
+        };
+    }
+};
