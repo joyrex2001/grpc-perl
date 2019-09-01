@@ -39,7 +39,7 @@ L<Google::ProtocolBuffers::Dynamic>
 
 =cut
 
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 
 XSLoader::load(__PACKAGE__, $VERSION );
 
