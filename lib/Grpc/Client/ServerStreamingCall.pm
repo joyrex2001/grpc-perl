@@ -36,6 +36,20 @@ sub start {
 	$self->{_metadata} = $event->{metadata};
 }
 
+## Reads the next value from the server.
+##
+## @return The next value from the server, or undef if there is none
+
+sub read {
+    my $self = shift;
+
+    my $response = $self->{_call}->startBatch(
+        Grpc::Constants::GRPC_OP_RECV_MESSAGE() => true,
+    )->{message};
+
+    return $self->deserializeResponse($response);
+}
+
 ## @return An array of response values
 
 sub responses {
