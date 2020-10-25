@@ -35,3 +35,10 @@ if (fork() == 0) { # in child
 
 * https://metacpan.org/pod/Grpc::XS
 * https://hub.docker.com/r/joyrex2001/grpc-perl
+
+## Installation
+
+On Ubuntu it requires the `libgrpc-dev` package so:
+
+sudo apt-get install libgrpc-dev
+
