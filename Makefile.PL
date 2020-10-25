@@ -101,4 +101,11 @@ WriteMakefile(
       CONFIGURE_REQUIRES    => {
           'Devel::CheckLib'     => 0,
       },
+      META_MERGE => {
+          resources => {
+              repository => 'https://github.com/joyrex2001/grpc-perl',
+              bugtracker => 'https://github.com/joyrex2001/grpc-perl/issues',
+              homepage   => 'https://github.com/joyrex2001/grpc-perl',
+          },
+      },
     );
