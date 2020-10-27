@@ -20,6 +20,7 @@ jobs:
       - name: Regular tests
         run: |
             apt-get install -y libgrpc-dev
+            cpanm Devel::CheckLib
             perl Makefile.PL
             make
             make test
