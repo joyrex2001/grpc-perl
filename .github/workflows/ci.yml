@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Regular tests
         run: |
-            apt-get install libgrpc-dev
+            apt-get install -y libgrpc-dev
             perl Makefile.PL
             make
             make test
