@@ -31,14 +31,16 @@ if (fork() == 0) { # in child
 }
 ```
 
+## Installation
+
+To install this package on ubuntu, install `libgrpc-dev` package first:
+
+```bash
+sudo apt-get install libgrpc-dev
+```
+
 ## See also
 
 * https://metacpan.org/pod/Grpc::XS
 * https://hub.docker.com/r/joyrex2001/grpc-perl
-
-## Installation
-
-On Ubuntu it requires the `libgrpc-dev` package so:
-
-sudo apt-get install libgrpc-dev
 
