@@ -20,7 +20,11 @@ createFromPlugin(SV* callback)
     plugin.destroy = plugin_destroy_state;
     plugin.state = (void *)SvRV(callback);
     plugin.type = "";
-    ctx->wrapped = grpc_metadata_credentials_create_from_plugin(plugin, NULL);
+    ctx->wrapped = grpc_metadata_credentials_create_from_plugin(plugin,
+#if GRPC_METADATA_CREDENTIALS_CRATE_FROM_PLUGIN_HAS_3_ARGS
+        GRPC_PRIVACY_AND_INTEGRITY,
+#endif
+    NULL);
     SvREFCNT_inc(callback);
     RETVAL = ctx;
   OUTPUT: RETVAL

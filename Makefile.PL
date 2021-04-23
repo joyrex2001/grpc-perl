@@ -88,6 +88,25 @@ grpc_ssl_credentials_create(0, 0, 0, 0);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_SSL_CREDENTIALS_HAS_4_ARGS");
 
+check_lib(
+    %CHECKLIB_ARGS,
+    header => [$CHECKLIB_ARGS{header}, "grpc/grpc_security.h"],
+    function    => <<'EOT',
+grpc_metadata_credentials_plugin plugin;
+return 0;
+grpc_metadata_credentials_create_from_plugin(plugin, 0, NULL);
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_METADATA_CREDENTIALS_CRATE_FROM_PLUGIN_HAS_3_ARGS");
+
+check_lib(
+    %CHECKLIB_ARGS,
+    header => [$CHECKLIB_ARGS{header}, "grpc/grpc_security.h"],
+    function    => <<'EOT',
+return 0;
+grpc_google_default_credentials_create(NULL);
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_GOOGLE_DEFAULT_CREDENTIALS_CREATE_HAS_1_ARG");
+
 WriteMakefile(
       NAME                  => 'Grpc::XS',
       VERSION_FROM          => 'lib/Grpc/XS.pm',

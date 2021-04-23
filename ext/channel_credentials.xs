@@ -3,7 +3,11 @@ createDefault()
   PREINIT:
     ChannelCredentialsCTX* ctx = (ChannelCredentialsCTX *)malloc( sizeof(ChannelCredentialsCTX) );
   CODE:
-    ctx->wrapped = grpc_google_default_credentials_create();
+    ctx->wrapped = grpc_google_default_credentials_create(
+#if GRPC_GOOGLE_DEFAULT_CREDENTIALS_CREATE_HAS_1_ARG
+    NULL
+#endif
+    );
     RETVAL = ctx;
   OUTPUT: RETVAL
 
