@@ -34,13 +34,10 @@ sub new {
 	my $credentials        = $param{"credentials"};
 	my $timeout            = $param{"timeout"};
 
-	if (defined($primary_user_agent)) {
-		$primary_user_agent .= " ";
-	} else {
-		$primary_user_agent = "";
+	unless (defined($primary_user_agent))
+		$primary_user_agent = "grpc-perl/".($Grpc::XS::VERSION);
 	}
-	$primary_user_agent = "grpc-perl/".($Grpc::XS::VERSION);
-
+	
 	if (!exists($param{"credentials"})) {
 		die("The 'credentials' key is now required. Please see one of the ".
 			  "Grpc::XS::ChannelCredentials::create methods");
