@@ -37,11 +37,21 @@ new(const char *class, const char* target, ... )
     perl_grpc_read_args_array(hash, &args);
 
     if (creds == NULL) {
+#ifdef GRPC_NO_INSECURE_BUILD
+      grpc_channel_credentials * insecure_cred = grpc_insecure_credentials_create();
+      ctx->wrapped = grpc_channel_create(target, insecure_cred, &args);
+      grpc_channel_credentials_release(insecure_cred);
+#else
       ctx->wrapped = grpc_insecure_channel_create(target, &args, NULL);
+#endif
     } else {
       gpr_log(GPR_DEBUG, "Initialized secure channel");
+#ifdef GRPC_NO_INSECURE_BUILD
+      ctx->wrapped = grpc_channel_create(target, creds->wrapped, &args);
+#else
       ctx->wrapped =
           grpc_secure_channel_create(creds->wrapped, target, &args, NULL);
+#endif
     }
     free(args.args);
 

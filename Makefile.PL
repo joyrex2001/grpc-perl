@@ -107,6 +107,16 @@ grpc_google_default_credentials_create(NULL);
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_GOOGLE_DEFAULT_CREDENTIALS_CREATE_HAS_1_ARG");
 
+check_lib(
+    %CHECKLIB_ARGS,
+    debug => 1,
+    function    => <<'EOT',
+grpc_channel_credentials * cred = NULL;
+return 0;
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_NO_INSECURE_BUILD");
+
+
 WriteMakefile(
       NAME                  => 'Grpc::XS',
       VERSION_FROM          => 'lib/Grpc/XS.pm',

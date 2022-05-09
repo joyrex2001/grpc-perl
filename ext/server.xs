@@ -87,13 +87,27 @@ requestCall(Grpc::XS::Server self)
 long
 addHttp2Port(Grpc::XS::Server self, SV* addr)
   CODE:
+#ifdef GRPC_NO_INSECURE_BUILD
+    {
+      grpc_server_credentials * insecure_cred = grpc_insecure_server_credentials_create();
+      RETVAL = grpc_server_add_http2_port(self->wrapped, SvPV_nolen(addr), insecure_cred);
+      grpc_server_credentials_release(insecure_cred);
+    }
+#else
     RETVAL = grpc_server_add_insecure_http2_port(self->wrapped, SvPV_nolen(addr));
+#endif
   OUTPUT: RETVAL
 
 long
 addSecureHttp2Port(Grpc::XS::Server self, SV* addr, Grpc::XS::ServerCredentials creds)
   CODE:
-    RETVAL = grpc_server_add_secure_http2_port(self->wrapped, SvPV_nolen(addr), creds->wrapped);
+    RETVAL =
+#ifdef GRPC_NO_INSECURE_BUILD
+      grpc_server_add_http2_port(
+#else
+      grpc_server_add_secure_http2_port(
+#endif
+        self->wrapped, SvPV_nolen(addr), creds->wrapped);
   OUTPUT: RETVAL
 
 void
