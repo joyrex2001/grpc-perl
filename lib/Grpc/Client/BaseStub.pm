@@ -34,7 +34,7 @@ sub new {
 	my $credentials        = $param{"credentials"};
 	my $timeout            = $param{"timeout"};
 
-	unless (defined($primary_user_agent))
+	unless (defined($primary_user_agent)) {
 		$primary_user_agent = "grpc-perl/".($Grpc::XS::VERSION);
 	}
 	
