@@ -109,7 +109,6 @@ EOT
 
 check_lib(
     %CHECKLIB_ARGS,
-    debug => 1,
     function    => <<'EOT',
 grpc_channel_credentials * cred = NULL;
 return 0;
