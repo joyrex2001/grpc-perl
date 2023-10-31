@@ -112,6 +112,18 @@ return 0;
 EOT
 ) and ($EXTRA_DEFINES .= " -DGRPC_NO_INSECURE_BUILD");
 
+# grpc_shutdown() is async in recent versions of the library, leading
+# to a race at shutdown which can cause fork to fail. See
+# https://github.com/joyrex2001/grpc-perl/issues/22.
+# If the library has grpc_shutdown_blocking(), use that.
+check_lib(
+    %CHECKLIB_ARGS,
+    function    => <<'EOT',
+void *p = grpc_shutdown_blocking;
+return 0;
+EOT
+) and ($EXTRA_DEFINES .= " -DGRPC_HAS_SHUTDOWN_BLOCKING");
+
 
 WriteMakefile(
       NAME                  => 'Grpc::XS',

@@ -8,23 +8,33 @@ use Grpc::XS::Server;
 use Grpc::XS::Channel;
 use Grpc::XS::Call;
 
-sub run_in_child {
+my $ITERATIONS = 1;
+
+sub run_server {
+    my $do_exit = shift;
+
     Grpc::XS::init();
     my $server = new Grpc::XS::Server();
     my $port = $server->addHttp2Port('0.0.0.0:0');
     my $channel = new Grpc::XS::Channel('localhost:'.$port);
     $server->start();
-    exit 3;
+    exit 3 if $do_exit;
 }
 
-Grpc::XS::destroy();
-my $pid1 = fork() || run_in_child();
-my $pid2 = fork() || run_in_child();
+foreach my $i (1..$ITERATIONS) {
+    run_server();
 
-waitpid $pid1, 0;
-is $?, 256 * 3;
+    Grpc::XS::destroy();
+    my $pid1 = fork() || run_server(1);
+    my $pid2 = fork() || run_server(1);
 
-waitpid $pid2, 0;
-is $?, 256 * 3;
+    waitpid $pid1, 0;
+    is $?, 256 * 3;
+
+    waitpid $pid2, 0;
+    is $?, 256 * 3;
+
+    run_server();
+}
 
 done_testing;
