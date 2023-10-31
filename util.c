@@ -63,7 +63,11 @@ void grpc_perl_destroy() {
     return;
   }
   grpc_perl_shutdown_completion_queue();
+#if defined(GRPC_HAS_SHUTDOWN_BLOCKING)
+  grpc_shutdown_blocking();
+#else
   grpc_shutdown();
+#endif
   module_initialized = false;
 }
 
