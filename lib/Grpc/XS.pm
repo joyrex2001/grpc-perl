@@ -28,7 +28,7 @@ Vincent van Dam <joyrex2001@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2017-2022 by Vincent van Dam.
+This software is copyright (c) 2017-2023 by Vincent van Dam.
 grpc-perl is licensed under the Apache License 2.0.
 
 =cut
@@ -39,7 +39,7 @@ L<Google::ProtocolBuffers::Dynamic>
 
 =cut
 
-our $VERSION = '0.37';
+our $VERSION = '0.38';
 
 XSLoader::load(__PACKAGE__, $VERSION );
 
