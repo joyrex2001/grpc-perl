@@ -104,7 +104,7 @@ startBatch(Grpc::XS::Call self, ...)
 
       switch(atoi(SvPV_nolen(key))) {
         case GRPC_OP_SEND_INITIAL_METADATA:
-          value = SvRV(value);
+          if (SvROK(value)) value = SvRV(value);
           if (SvTYPE(value)!=SVt_PVHV) {
             croak("Expected a hash for GRPC_OP_SEND_INITIAL_METADATA");
             goto cleanup;
@@ -120,7 +120,7 @@ startBatch(Grpc::XS::Call self, ...)
                metadata.metadata;
           break;
         case GRPC_OP_SEND_MESSAGE:
-          value = SvRV(value);
+          if (SvROK(value)) value = SvRV(value);
           if (SvTYPE(value)!=SVt_PVHV) {
             croak("Expected a hash for send message");
             goto cleanup;
@@ -165,7 +165,8 @@ startBatch(Grpc::XS::Call self, ...)
           if (hv_exists((HV*)value, "metadata", strlen("metadata"))) {
             SV** inner_value;
             inner_value = hv_fetchs((HV*)value, "metadata", 0);
-            if (!create_metadata_array((HV*)SvRV(*inner_value), &trailing_metadata)) {
+            if (!SvROK(*inner_value) ||
+                !create_metadata_array((HV*)SvRV(*inner_value), &trailing_metadata)) {
               croak("Bad trailing metadata value given");
               goto cleanup;
             }
